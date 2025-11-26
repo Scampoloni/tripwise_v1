@@ -1,0 +1,108 @@
+/* Light-Theme explizit aliasen, damit es nicht vom dark-Block ueberschrieben wird */
+:root,
+[data-theme="light"] {
+  /* Brand */
+  --primary: #3a7bff;
+  --primary-hover: #2f6ae8;
+  --primary-contrast: #fbfdff;
+  --primary-light: #d9e6ff;
+  --primary-soft-bg: #eaf1ff;
+
+  /* Accent / Supporting */
+  --accent: #ec6f5b;
+  --accent-hover: #da5f4b;
+
+  /* State */
+  --success: #16a34a;
+  --warning: #f5a524;
+  --danger:  #ef4444;
+
+  /* UI */
+  --bg: #f4f6fb;
+  --background: var(--bg);
+  --surface: #fdfefe;
+  --surface-soft: #eef2fb;
+  --surface-elev: rgba(253, 254, 255, 0.82);
+  --border: #d7dfea;
+  --border-strong: #c5cfde;
+
+  /* Text */
+  --text: #0f172a;
+  --text-secondary: #5b6478;
+  --link: #2f6ae8;
+  --link-hover: #244fc0;
+
+  /* Subtle surfaces */
+  --secondary: #e6ecf7;
+  --secondary-hover: #d9e3f3;
+
+  /* Focus & outlines */
+  --focus: rgba(58, 123, 255, 0.6);
+  --focus-outer: rgba(58, 123, 255, 0.2);
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* Radius */
+  --radius-sm: 0.4rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.1rem;
+  --radius-xl: 1.35rem;
+  --radius-card: 1.5rem;
+
+  /* Shadows */
+  --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow-elevated: 0 28px 60px rgba(15, 23, 42, 0.12);
+
+  /* Z-Index Scale */
+  --z-header: 100;
+  --z-modal: 1000;
+}
+
+[data-theme="dark"] {
+  /* Brand */
+  --primary: #8ab4ff;
+  --primary-hover: #a8c8ff;
+  --primary-contrast: #050b18;
+  --primary-light: #0f1f3d;
+  --primary-soft-bg: #102549;
+
+  --accent: #f29c7c;
+  --accent-hover: #f28a64;
+
+  /* State */
+  --success: #21d27a;
+  --warning: #f7b955;
+  --danger:  #fb6c6c;
+
+  /* UI */
+  --bg: #030815;
+  --background: var(--bg);
+  --surface: #0b1220;
+  --surface-soft: #111a2b;
+  --surface-elev: rgba(11, 18, 32, 0.88);
+  --border: color-mix(in oklab, var(--surface) 65%, var(--primary) 35%);
+  --border-strong: color-mix(in oklab, var(--surface) 35%, var(--primary) 65%);
+
+  /* Text */
+  --text: #e6ebf5;
+  --text-secondary: #a3afc7;
+  --link: #a8c8ff;
+  --link-hover: #c2d6ff;
+
+  /* Subtle surfaces */
+  --secondary: #121a2d;
+  --secondary-hover: #1b2538;
+
+  /* Focus */
+  --focus: rgba(168, 200, 255, 0.8);
+  --focus-outer: rgba(53, 93, 173, 0.35);
+
+  /* Shadows */
+  --shadow-soft: 0 24px 60px rgba(2, 6, 23, 0.55);
+  --shadow-elevated: 0 40px 90px rgba(0, 0, 0, 0.65);
+}

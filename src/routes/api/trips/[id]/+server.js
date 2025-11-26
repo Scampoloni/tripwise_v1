@@ -1,0 +1,57 @@
+// src/routes/api/trips/[id]/+server.js
+import { json } from '@sveltejs/kit';
+import {
+  getTripById,
+  updateTrip,
+  deleteTrip
+} from '$lib/server/db';
+
+export async function GET({ params, locals }) {
+  const userId = locals.userId;
+
+  if (!userId) {
+    return json({ error: 'Nicht eingeloggt' }, { status: 401 });
+  }
+
+  const trip = await getTripById(params.id, userId);
+  if (!trip) {
+    // Trip existiert nicht oder gehoert nicht diesem User
+    return json({ error: 'Trip nicht gefunden oder nicht erlaubt' }, { status: 404 });
+  }
+
+  return json(trip);
+}
+
+export async function PATCH({ params, request, locals }) {
+  const userId = locals.userId;
+
+  if (!userId) {
+    return json({ error: 'Nicht eingeloggt' }, { status: 401 });
+  }
+
+  const data = await request.json();
+  const trip = await updateTrip(params.id, data, userId);
+
+  if (!trip) {
+    // Trip existiert nicht oder gehoert nicht diesem User
+    return json({ error: 'Trip nicht gefunden oder nicht erlaubt' }, { status: 404 });
+  }
+
+  return json(trip);
+}
+
+export async function DELETE({ params, locals }) {
+  const userId = locals.userId;
+
+  if (!userId) {
+    return json({ error: 'Nicht eingeloggt' }, { status: 401 });
+  }
+
+  const ok = await deleteTrip(params.id, userId);
+  if (!ok) {
+    // Trip existiert nicht oder gehoert nicht diesem User
+    return json({ error: 'Trip nicht gefunden oder nicht erlaubt' }, { status: 404 });
+  }
+
+  return json({ success: true });
+}

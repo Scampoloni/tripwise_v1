@@ -1,0 +1,166 @@
+/* Wenn du Tailwind nutzt und deine Direktiven in src/app.css liegen: */
+
+
+/* -------- Global Base / Reset -------- */
+:root {
+  scrollbar-gutter: stable both-edges;
+  font-size: 16px;
+}
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #svelte { height: 100%; }
+
+html {
+  /* Sync mit Theme fuer korrekte native Form-/Scrollbars */
+  color-scheme: light;
+  background-color: var(--bg);
+}
+[data-theme="dark"] html,
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background-color: var(--bg);
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Links */
+a {
+  color: var(--link, var(--primary));
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+a:hover { color: var(--link-hover, var(--primary-hover)); }
+
+/* Fokus – nutzt Tokens aus variables.css */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus, #93C5FD);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-outer, #DBEAFE);
+}
+
+/* Scrollbar (Chromium/WebKit) */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--secondary); }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--text-secondary) 35%, transparent);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--text-secondary) 55%, transparent);
+}
+
+/* Container-Utility fuer konsistente Breite */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 1.5rem);
+}
+
+/* Typographie Hierarchie */
+h1,
+.page-title {
+  font-size: clamp(2.1rem, 4vw, 2.7rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text);
+}
+
+h2,
+.section-title {
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+}
+
+p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+small {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Karten / Flächen – sanfte Defaults */
+.card,
+.card-surface {
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+  border-radius: var(--radius-card, 1.5rem);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Sticky Header Glass-Effekt – nutzt surface-elev aus variables.css */
+.header {
+  background: var(--surface-elev, var(--surface));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  z-index: var(--z-header, 100);
+}
+
+/* globals.css – Zusatz */
+.app::before{
+  content:"";
+  position:fixed; inset:0; z-index:-2;
+  background: radial-gradient(1200px 800px at 85% -10%, color-mix(in oklab, var(--primary) 16%, transparent), transparent),
+              radial-gradient(1000px 700px at 10% 110%, color-mix(in oklab, var(--accent, var(--warning)) 14%, transparent), transparent);
+}
+.app::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" opacity=".06"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>');
+}
+.card,
+.card-surface{
+  background: color-mix(in oklab, var(--surface) 96%, transparent);
+  border:1px solid color-mix(in oklab, var(--border) 82%, transparent);
+}
+.btn-primary{
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 78%, #fff 22%), var(--primary));
+  color: var(--primary-contrast);
+  border: 1px solid color-mix(in oklab, var(--primary) 55%, transparent);
+  box-shadow: 0 18px 32px color-mix(in oklab, var(--primary) 25%, transparent);
+  border-radius: 999px;
+  padding: 0.85rem 1.65rem;
+}
+.btn-primary:hover{ transform: translateY(-1px); }
+
+/* ---------------- Motion Utilities ---------------- */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-animate="fadeUp"] {
+  animation: fadeUp 0.35s ease both;
+}

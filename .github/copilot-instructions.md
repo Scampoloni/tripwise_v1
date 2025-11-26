@@ -1,0 +1,1 @@
+-- Follow Svelte 5 standards
