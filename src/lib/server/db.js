@@ -1,10 +1,18 @@
 // src/lib/server/db.js
 import { MongoClient, ObjectId } from 'mongodb';
-import { DB_URI, DB_NAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const DB_URI = env.DB_URI;
+const DB_NAME = env.DB_NAME;
 
 if (!DB_URI) {
-  throw new Error('DB_URI ist nicht gesetzt, bitte .env pruefen');
+  throw new Error('Missing DB_URI environment variable');
 }
+
+if (!DB_NAME) {
+  throw new Error('Missing DB_NAME environment variable');
+}
+
 
 const client = new MongoClient(DB_URI);
 
