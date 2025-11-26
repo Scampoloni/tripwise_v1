@@ -1,3 +1,6 @@
 [build]
     command = "npm run build"
     publish = "build"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "DB_NAME,DB_URI"
