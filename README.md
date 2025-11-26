@@ -23,7 +23,7 @@
 ## 1. Einordnung & Zielsetzung
 
 ### Kontext & Problem
-Reisende verlieren während ihrer Trips regelmässig den Überblick über ihre Ausgaben. Bestehende Budget-Apps (TravelSpend, Tripcoin, Wanderlog) sind entweder zu komplex (zu viele Features) oder zu basic (nur Liste + Summe). Das Problem: Reisende wollen nicht nur wissen, **was** sie ausgegeben haben, sondern auch **warum** (Kategorieanalyse), **wann** (Timeline), und **was das bedeutet** (Vorhersagen bei Überschreitungen). 
+Reisende verlieren während ihrer Trips regelmässig den Überblick über ihre Ausgaben. Bestehende Budget-Apps (TravelSpend, Tripcoin, Wanderlog) sind entweder zu komplex (zu viele Features) oder zu basic (nur Liste + Summe). Das Problem: Reisende wollen nicht nur wissen, **was** sie ausgegeben haben, sondern auch **warum** (Kategorieanalyse), **wann** (Timeline), und **was das bedeutet** (Vorhersagen bei Überschreitungen).
 
 Ein intuitive, visuelle Reise-Budget-App, die lokale Insights bietet (z.B. "Transport in Tokio ist günstig") und Ausgaben intelligent visualisiert, existiert noch nicht.
 

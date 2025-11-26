@@ -7,7 +7,6 @@
     updateTrip as updateTripInStore
   } from '$lib/stores/trips.js';
   import type { Writable } from 'svelte/store';
-  import { calculateUserShare } from '$lib/utils/calculations.js';
   import { calculateSplit } from '$lib/utils/split.js';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
@@ -100,15 +99,15 @@
   });
 
   const remaining = $derived(() => {
-    const t = Number.isFinite(totalBudget) ? totalBudget : 0;
-    const s = Number.isFinite(spent) ? spent : 0;
+    const t = Number(totalBudget);
+    const s = Number(spent);
     const diff = t - s;
     return Number.isFinite(diff) && diff > 0 ? diff : 0;
   });
 
   const progressPct = $derived(() => {
-    const t = Number.isFinite(totalBudget) ? totalBudget : 0;
-    const s = Number.isFinite(spent) ? spent : 0;
+    const t = Number(totalBudget);
+    const s = Number(spent);
     if (t <= 0) return 0;
     const ratio = (s / t) * 100;
     if (!Number.isFinite(ratio)) return 0;
@@ -196,7 +195,7 @@
     });
   });
 
-  $effect(async () => {
+  $effect(() => {
     if (!tripId || !trip) return;
     reloadExpensesForTrip(tripId);
   });

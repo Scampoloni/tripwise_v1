@@ -1,9 +1,7 @@
 <script>
   import {
-    calculateSpent,
     calculatePercentUsed,
-    calculateDaysRemaining,
-    calculateUserShare
+    calculateDaysRemaining
   } from '$lib/utils/calculations.js';
   import { browser } from '$app/environment';
   import { createEventDispatcher } from 'svelte';
