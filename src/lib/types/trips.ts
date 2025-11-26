@@ -24,7 +24,12 @@ export type ApiTrip = {
   destination: string;
   startDate: string;
   endDate: string;
-  totalBudget: number;
+  /**
+   * Backend liefert aktuell entweder `budget` (neues Feld) oder `totalBudget` (Legacy).
+   * Das Frontend mappt beides nach StoreTrip.budget, damit das UI nur einen Wert nutzt.
+   */
+  totalBudget?: number;
+  budget?: number;
   currency: string;
   status: string;
   participants: Participant[];
@@ -43,7 +48,12 @@ export type StoreTrip = {
   flag: string;
   startDate: string;
   endDate: string;
+  /** Kanonisches Budgetfeld fuer das komplette UI. */
   budget: number;
+  /**
+   * Legacy-Abbild aus der API, nur noch fuer Debug/Logging. UI verwendet ausschliesslich `budget`.
+   */
+  totalBudget?: number;
   currency: string;
   status: string;
   participants: Participant[];

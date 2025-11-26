@@ -13,10 +13,15 @@ import { browser } from '$app/environment';
 export const trips = writable(/** @type {StoreTrip[]} */ ([]));
 
 // Kleiner Helfer fuer API Requests
+/**
+ * @param {string} url
+ * @param {RequestInit & { headers?: Record<string, string> }} [options]
+ */
 async function fetchJSON(url, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options
+    ...options,
+    headers
   });
   if (!res.ok) {
     let message = `Request failed with status ${res.status}`;
@@ -69,6 +74,12 @@ function mapApiTripToStoreTrip(apiTrip) {
   /** @type {StoreExpense[]} */
   const expenses = Array.isArray(apiTrip.expenses) ? apiTrip.expenses : [];
 
+  // Budget kommt aktuell entweder als `budget` (neu) oder `totalBudget` (legacy) aus der API.
+  // Wir normalisieren beides auf StoreTrip.budget, damit jede UI-Berechnung denselben Wert nutzt.
+  const rawBudget = Number(apiTrip.budget ?? apiTrip.totalBudget ?? 0);
+  const budget = Number.isFinite(rawBudget) ? rawBudget : 0;
+  const legacyTotal = typeof apiTrip.totalBudget === 'number' ? apiTrip.totalBudget : undefined;
+
   return {
     id: apiTrip.id,
     name: apiTrip.name,
@@ -78,7 +89,8 @@ function mapApiTripToStoreTrip(apiTrip) {
     flag: apiTrip.flag || '🌍',
     startDate: apiTrip.startDate || '',
     endDate: apiTrip.endDate || '',
-    budget: apiTrip.totalBudget ?? 0,
+    budget,
+    totalBudget: legacyTotal,
     currency: apiTrip.currency || 'CHF',
     status: apiTrip.status || 'planning',
     participants,
@@ -118,24 +130,36 @@ export async function loadTrips() {
 
   try {
     const data = /** @type {ApiTrip[]} */ (await fetchJSON('/api/trips'));
+    console.log('DEBUG Phase3 loadTrips response', data);
     const mappedTrips = await Promise.all(
       (data || []).map(async (apiTrip) => {
+        console.log('DEBUG Phase3 loadTrips apiTrip', apiTrip);
         const base = mapApiTripToStoreTrip(apiTrip);
+        console.log('DEBUG Phase3 loadTrips storeTrip base', base);
 
         try {
           const expensesData = /** @type {ApiExpense[]} */ (
             await fetchJSON(`/api/trips/${base.id}/expenses`)
           );
           const mappedExpenses = (expensesData || []).map(mapApiExpenseToStoreExpense);
-          return { ...base, expenses: mappedExpenses };
+          const withExpenses = { ...base, expenses: mappedExpenses };
+          console.log('DEBUG Phase3 loadTrips storeTrip withExpenses', withExpenses);
+          return withExpenses;
         } catch (e) {
           console.warn('Konnte Expenses fuer Trip nicht laden', base.id, e);
-          return { ...base, expenses: [] };
+          const fallback = { ...base, expenses: [] };
+          console.log('DEBUG Phase3 loadTrips storeTrip fallback', fallback);
+          return fallback;
         }
       })
     );
 
     trips.set(mappedTrips);
+    console.log('=== RAW STORE TRIPS AFTER LOAD ===');
+    console.log(JSON.stringify(mappedTrips, null, 2));
+    mappedTrips.forEach((trip) => {
+      console.log('DEBUG Phase3 storeTrip final', trip);
+    });
     return mappedTrips;
   } catch (err) {
     // @ts-ignore
@@ -231,6 +255,7 @@ export async function updateTrip(id, updates) {
 }
 
 // Trip loeschen
+/** @param {string} id */
 export async function deleteTrip(id) {
   if (!browser) return;
 
@@ -291,6 +316,10 @@ export async function addExpense(tripId, expenseInput) {
 }
 
 // Expense loeschen
+/**
+ * @param {string} tripId
+ * @param {string} expenseId
+ */
 export async function deleteExpense(tripId, expenseId) {
   if (!browser) return;
 
@@ -312,6 +341,7 @@ export async function deleteExpense(tripId, expenseId) {
 }
 
 // Expenses fuer einen Trip neu laden
+/** @param {string} tripId */
 export async function reloadExpensesForTrip(tripId) {
   if (!browser) return;
 

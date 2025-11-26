@@ -21,10 +21,20 @@ export async function GET({ locals }) {
 
   try {
     const trips = await getTrips(userId);
-    const normalized = trips.map((trip) => ({
-      ...trip,
-      participants: ensureParticipants(trip.participants)
-    }));
+    const normalized = trips.map((trip) => {
+      const rawBudget = Number(trip?.budget ?? trip?.totalBudget ?? 0);
+      const budget = Number.isFinite(rawBudget) ? rawBudget : 0;
+      const normalizedTrip = {
+        ...trip,
+        budget,
+        totalBudget: typeof trip?.totalBudget === 'number' ? trip.totalBudget : undefined,
+        participants: ensureParticipants(trip.participants)
+      };
+      console.log('DEBUG Phase3 api/trips trip', normalizedTrip);
+      return normalizedTrip;
+    });
+    console.log('=== RAW API /api/trips OUTPUT ===');
+    console.log(JSON.stringify(normalized, null, 2));
     return json(normalized);
   } catch (err) {
     console.error('Fehler in GET /api/trips', err);

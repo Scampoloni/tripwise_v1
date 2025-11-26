@@ -1,10 +1,32 @@
 <script>
-  import { trips, deleteTrip } from '$lib/stores/trips.js';
+  import { trips, deleteTrip, loadTrips } from '$lib/stores/trips.js';
   import TripCard from '$lib/components/TripCard.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
 
   const allTrips = $derived($trips ?? []);
+
+  let hasRequestedTrips = $state(false);
+
+  $effect(() => {
+    if (!browser) return;
+    if (hasRequestedTrips) return;
+    hasRequestedTrips = true;
+    (async () => {
+      try {
+        await loadTrips();
+      } catch (err) {
+        console.error('Trips konnten nicht geladen werden', err);
+      }
+    })();
+  });
+
+  $effect(() => {
+    if (!browser) return;
+    if (!Array.isArray(allTrips) || allTrips.length === 0) return;
+    console.log('TRIPS PAGE allTrips snapshot', allTrips);
+  });
 
   let filterStatus = $state('all'); // all | active | upcoming | past
   let searchTerm = $state('');

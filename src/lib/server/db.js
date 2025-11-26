@@ -159,7 +159,12 @@ export async function getTrips(userId) {
   const col = await tripsCollection();
   const query = userId ? { userId: new ObjectId(userId) } : {};
   const docs = await col.find(query).sort({ createdAt: -1 }).toArray();
-  return docs.map(mapTrip);
+  const trips = docs.map(mapTrip);
+  trips.forEach((trip) => {
+    console.log('DEBUG Phase3 db/getTrips trip', trip);
+    console.log('=== RAW DB TRIP ===', trip);
+  });
+  return trips;
 }
 
 export async function getTripById(id, userId) {
@@ -169,7 +174,9 @@ export async function getTripById(id, userId) {
     query.userId = new ObjectId(userId);
   }
   const doc = await col.findOne(query);
-  return mapTrip(doc);
+  const trip = mapTrip(doc);
+  console.log('=== RAW DB TRIP ===', trip);
+  return trip;
 }
 
 

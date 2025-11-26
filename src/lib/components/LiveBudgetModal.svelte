@@ -1,6 +1,6 @@
 <script>
   import { trips } from '$lib/stores/trips.js';
-  import { calculateUserShare } from '$lib/utils/calculations.js';
+  import { calculateSpent } from '$lib/utils/calculations.js';
   import { convertToChf } from '$lib/utils/currency.js';
   import { goto } from '$app/navigation';
 
@@ -83,16 +83,7 @@
 
     const budget = Number(trip.budget ?? 0);
     const currency = trip.currency ?? 'CHF';
-
-    const expenses = Array.isArray(trip.expenses) ? trip.expenses : [];
-    const participants = Array.isArray(trip.participants) ? trip.participants : [];
-    const participantCount = participants.length > 0 ? participants.length : 1;
-    const currentUserId = 'me';
-
-    const spent = expenses.reduce(
-      (sum, exp) => sum + calculateUserShare(exp, currentUserId, participantCount),
-      0
-    );
+    const spent = Number(calculateSpent(trip.expenses ?? [])) || 0;
 
     const totalDays = Math.max(1, diffInDays(start, end) + 1);
     const daysElapsed = Math.min(totalDays, Math.max(1, diffInDays(start, today) + 1));

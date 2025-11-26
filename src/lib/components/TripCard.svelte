@@ -7,41 +7,50 @@
   import { createEventDispatcher } from 'svelte';
   import { goto } from '$app/navigation';
 
-  const { trip = {} } = $props();
+  // Trip kommt von aussen, kein Runes-$props
+  export let trip;
+
   const dispatch = createEventDispatcher();
 
-  const spent = $derived(() => {
-    const expensesList = Array.isArray(trip.expenses) ? trip.expenses : [];
+  // Sicherstellen, dass wir immer ein Array haben
+  $: expenses = Array.isArray(trip?.expenses) ? trip.expenses : [];
 
-    const raw = expensesList.reduce((sum, exp) => {
-      const amount = Number(exp?.amount ?? 0);
-      const s = Number.isFinite(sum) ? sum : 0;
-      const v = Number.isFinite(amount) ? amount : 0;
-      return s + v;
-    }, 0);
+  // Budget: bevorzugt trip.budget, sonst totalBudget, sonst 0
+  $: rawBudget =
+    typeof trip?.budget === 'number' && Number.isFinite(trip.budget)
+      ? trip.budget
+      : Number(trip?.budget ?? trip?.totalBudget ?? 0) || 0;
 
-    return Number.isFinite(raw) ? raw : 0;
-  });
-  const percentUsed = $derived(
-    calculatePercentUsed(spent, trip.budget ?? 0)
-  );
+  $: cardBudget = rawBudget > 0 ? rawBudget : 0;
 
-  let daysRemaining = $state(0);
-  $effect(() => {
-    if (browser) {
-      daysRemaining = calculateDaysRemaining(trip.endDate);
-    }
-  });
+  // Ausgaben: Summe aller amount Werte
+  $: cardSpent = expenses.reduce((sum, exp) => {
+    const amount = Number(exp?.amount ?? 0);
+    const s = Number.isFinite(sum) ? sum : 0;
+    const v = Number.isFinite(amount) ? amount : 0;
+    return s + v;
+  }, 0);
 
-  const statusColor = $derived(
+  $: cardSpent = Number.isFinite(cardSpent) ? cardSpent : 0;
+
+  // Prozent
+  $: percentUsed = calculatePercentUsed(cardSpent, cardBudget);
+
+  // Tage uebrig
+  $: daysRemaining = 0;
+  $: if (browser && trip?.endDate) {
+    daysRemaining = calculateDaysRemaining(trip.endDate);
+  }
+
+  // Farbe fuer Prozent
+  $: statusColor =
     percentUsed >= 100
       ? 'var(--danger)'
       : percentUsed >= 80
       ? 'var(--warning)'
-      : 'var(--success)'
-  );
+      : 'var(--success)';
 
-  // Hilfsfunktion statt fehlerhaftem $derived-Callback
+  // Initialen fuer Avatar
   function getInitials(name) {
     const trimmed = (name ?? '').trim();
     if (!trimmed) return 'TR';
@@ -52,13 +61,10 @@
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
- const initials = $derived(
-  getInitials(trip.destination || trip.name)
-);
-
+  $: initials = getInitials(trip?.destination || trip?.name || '');
 
   function handleCardClick() {
-    const id = trip.id ?? trip._id;
+    const id = trip?.id ?? trip?._id;
     if (!id) return;
     goto(`/trips/${id}`);
   }
@@ -74,20 +80,31 @@
     event?.stopPropagation?.();
     dispatch('delete', trip);
   }
+
+  // Debug: kannst du spaeter wieder entfernen
+  $: console.log('TRIPCARD LIST DATA', {
+    id: trip?.id,
+    name: trip?.name,
+    budget: cardBudget,
+    spent: cardSpent,
+    rawBudget: trip?.budget,
+    totalBudget: trip?.totalBudget,
+    expensesCount: expenses.length
+  });
 </script>
 
 <div
   class="trip-card"
   role="button"
   tabindex="0"
-  onclick={handleCardClick}
-  onkeydown={handleKeydown}
+  on:click={handleCardClick}
+  on:keydown={handleKeydown}
 >
   <button
     class="delete-btn"
     type="button"
     aria-label="Trip loeschen"
-    onclick={handleDeleteClick}
+    on:click|stopPropagation={handleDeleteClick}
   >
     ✕
   </button>
@@ -100,8 +117,8 @@
     <div class="trip-main">
       <div class="trip-header">
         <div class="trip-title-block">
-          <h3>{trip.name}</h3>
-          {#if trip.destination}
+          <h3>{trip?.name}</h3>
+          {#if trip?.destination}
             <p class="trip-destination">{trip.destination}</p>
           {/if}
         </div>
@@ -120,11 +137,11 @@
       <div class="trip-footer">
         <div class="budget-info">
           <span class="spent">
-            {(Number(spent) || 0).toFixed(0)}
+            {cardSpent.toFixed(0)}
           </span>
           <span class="separator">/</span>
           <span class="total">
-            {(Number(trip.budget) || 0).toFixed(0)} {trip.currency}
+            {cardBudget.toFixed(0)} {trip?.currency}
           </span>
         </div>
 
@@ -141,6 +158,7 @@
     </div>
   </div>
 </div>
+
 
 <style>
   .trip-card {

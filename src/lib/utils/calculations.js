@@ -6,31 +6,6 @@ export function calculateSpent(expenses = []) {
   return expenses.reduce((sum, exp) => sum + toNumber(exp?.amount), 0);
 }
 
-// Anteil einer Ausgabe fuer den aktuellen Benutzer
-export function calculateUserShare(expense, currentUserId, participantCount) {
-  if (!expense) return 0;
-  const amount = toNumber(expense.amount);
-  if (amount <= 0) return 0;
-
-  const payerId = typeof expense.paidByParticipantId === 'string'
-    ? expense.paidByParticipantId
-    : null;
-
-  const isPayer = !!payerId && !!currentUserId && payerId === currentUserId;
-  const count = typeof participantCount === 'number' && Number.isFinite(participantCount)
-    ? participantCount
-    : 0;
-  const isSplit = expense.splitBetweenAll === true && count > 0;
-
-  if (isSplit) {
-    const perHead = amount / count;
-    return Number.isFinite(perHead) ? perHead : 0;
-  }
-
-  // Nicht geteilt, voller Betrag fuer den Zahler, sonst 0
-  return isPayer ? amount : 0;
-}
-
 // Restbudget, niemals negativ
 export function calculateRemaining(budget, spent) {
   const b = toNumber(budget);

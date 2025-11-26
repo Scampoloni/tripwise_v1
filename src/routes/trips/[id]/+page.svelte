@@ -79,41 +79,42 @@
     return calculateSplit(trip, expenses);
   });
 
-  const totalBudget = $derived(() => {
-    const b = Number(trip?.budget ?? 0);
-    return Number.isFinite(b) ? b : 0;
-  });
-
-  const spent = $derived(() => {
-    if (!trip) return 0;
-    const expensesList = Array.isArray(expenses) ? expenses : [];
-
-    const raw = expensesList.reduce((sum, exp) => {
-      const amount = Number(exp?.amount ?? 0);
-      const s = Number.isFinite(sum) ? sum : 0;
-      const v = Number.isFinite(amount) ? amount : 0;
-      return s + v;
-    }, 0);
-
+  const totalBudget = $derived.by(() => {
+    const raw = Number(trip?.budget ?? 0);
     return Number.isFinite(raw) ? raw : 0;
   });
 
-  const remaining = $derived(() => {
-    const t = Number(totalBudget);
-    const s = Number(spent);
-    const diff = t - s;
-    return Number.isFinite(diff) && diff > 0 ? diff : 0;
+  const expensesForBudget = $derived.by<StoreExpense[]>(() =>
+    Array.isArray(trip?.expenses) ? trip.expenses : []
+  );
+
+  const spent = $derived.by(() =>
+    expensesForBudget.reduce((sum, expense) => {
+      const safeSum = Number.isFinite(sum) ? sum : 0;
+      const amount = Number(expense?.amount ?? 0);
+      const safeAmount = Number.isFinite(amount) ? amount : 0;
+      return safeSum + safeAmount;
+    }, 0)
+  );
+
+  const remaining = $derived.by(() => Math.max(0, totalBudget - spent));
+
+  const progressPct = $derived.by(() => {
+    if (totalBudget <= 0) return 0;
+    const ratio = (spent / totalBudget) * 100;
+    if (!Number.isFinite(ratio)) return 0;
+    return Math.min(100, Math.max(0, Math.round(ratio)));
   });
 
-  const progressPct = $derived(() => {
-    const t = Number(totalBudget);
-    const s = Number(spent);
-    if (t <= 0) return 0;
-    const ratio = (s / t) * 100;
-    if (!Number.isFinite(ratio)) return 0;
-    const rounded = Math.round(ratio);
-    if (!Number.isFinite(rounded)) return 0;
-    return Math.min(100, Math.max(0, rounded));
+  $effect(() => {
+    console.log('DEBUG Phase2 DetailTrip Budget', {
+      tripBudget: trip?.budget,
+      tripTotalBudget: trip?.totalBudget,
+      totalBudget,
+      spent,
+      remaining,
+      progressPct
+    });
   });
   const expenseCount = $derived(expenses.length);
   const hasExpenses = $derived(expenseCount > 0);
@@ -197,7 +198,18 @@
 
   $effect(() => {
     if (!tripId || !trip) return;
-    reloadExpensesForTrip(tripId);
+    if (expensesLoadedForTripId === tripId) {
+      return;
+    }
+
+    (async () => {
+      try {
+        await reloadExpensesForTrip(tripId);
+        expensesLoadedForTripId = tripId;
+      } catch (err) {
+        console.error('Expenses konnten nicht geladen werden', err);
+      }
+    })();
   });
 
   function openAddModal() {

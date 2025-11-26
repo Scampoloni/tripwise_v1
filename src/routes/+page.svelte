@@ -1,7 +1,7 @@
 <script>
   import { trips } from '$lib/stores/trips.js';
   import LiveBudgetModal from '$lib/components/LiveBudgetModal.svelte';
-  import { calculateUserShare } from '$lib/utils/calculations.js';
+  import { calculateSpent } from '$lib/utils/calculations.js';
   import { convertToChf } from '$lib/utils/currency.js';
   import { goto } from '$app/navigation';
 
@@ -49,16 +49,14 @@
   function spentToChf(trip) {
     if (!trip) return 0;
     const expenses = Array.isArray(trip.expenses) ? trip.expenses : [];
-    const participants = Array.isArray(trip.participants) ? trip.participants : [];
-    const participantCount = participants.length > 0 ? participants.length : 1;
-    const currentUserId = 'me';
-
-    const personalSpent = expenses.reduce(
-      (sum, exp) => sum + calculateUserShare(exp, currentUserId, participantCount),
+    if (expenses.length === 0) {
+      const fallback = Number(calculateSpent(trip.expenses ?? [])) || 0;
+      return convertToChf(fallback, trip.currency);
+    }
+    return expenses.reduce(
+      (sum, exp) => sum + convertToChf(exp?.amount ?? 0, exp?.currency || trip.currency || 'CHF'),
       0
     );
-
-    return convertToChf(personalSpent, trip.currency);
   }
 
   function formatCurrency(amount, currency = 'CHF') {
