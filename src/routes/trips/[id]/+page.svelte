@@ -130,9 +130,96 @@
     }).format(date);
   }
 
+  function daysBetween(startIso: string | undefined, endIso: string | undefined): number {
+    if (!startIso || !endIso) return 0;
+    const start = new Date(startIso);
+    const end = new Date(endIso);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+    const diffMs = end.getTime() - start.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays > 0 ? diffDays : 0;
+  }
+
+  function pastDaysForTripRange(tripValue: StoreTrip | null): number {
+    if (!tripValue?.startDate || !tripValue?.endDate) return 0;
+    const start = new Date(tripValue.startDate);
+    const end = new Date(tripValue.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+    const today = new Date();
+    const effectiveEnd = today.getTime() > end.getTime() ? end : today;
+    const diffMs = effectiveEnd.getTime() - start.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays > 0 ? diffDays : 0;
+  }
+
   const dateRange = $derived(computeDateRange(trip));
 
   const categories = ['Unterkunft', 'Essen', 'Transport', 'Erlebnis', 'Shopping', 'Misc'];
+
+  const showGroupCard = false;
+  const showLegacyBudgetExtras = false;
+
+  const percentUsedDisplay = $derived.by(() => {
+    const pct = Number(progressPct) || 0;
+    return Math.max(0, Math.min(999, pct));
+  });
+
+  const budgetStatus = $derived.by(() => {
+    let label = 'Im Budget';
+    let className = 'badge--success';
+    if (totalBudget <= 0) {
+      label = 'Kein Budget gesetzt';
+      className = 'badge--neutral';
+    } else if (spent > totalBudget) {
+      label = 'Budget überschritten';
+      className = 'badge--danger';
+    } else if (spent >= 0.8 * totalBudget) {
+      label = 'Nahe am Limit';
+      className = 'badge--warning';
+    }
+    return { label, className };
+  });
+
+  const tripDays = $derived.by(() => daysBetween(trip?.startDate, trip?.endDate));
+
+  const dailyBudget = $derived.by(() =>
+    tripDays > 0 && totalBudget > 0 ? totalBudget / tripDays : 0
+  );
+
+  const pastDays = $derived.by(() =>
+    trip && (trip.status === 'active' || trip.status === 'completed')
+      ? pastDaysForTripRange(trip)
+      : 0
+  );
+
+  const avgPerDay = $derived.by(() => (pastDays > 0 ? spent / pastDays : 0));
+
+  const topCategoryInsight = $derived.by(() => {
+    const expenses = expensesForBudget;
+    if (!Array.isArray(expenses) || expenses.length === 0 || spent <= 0) {
+      return { label: '', percent: 0 };
+    }
+
+    const byCategory = new Map<string, number>();
+    for (const expense of expenses) {
+      const category = expense?.category || 'Andere';
+      const amount = Number(expense?.amount ?? 0);
+      const safeAmount = Number.isFinite(amount) ? amount : 0;
+      byCategory.set(category, (byCategory.get(category) ?? 0) + safeAmount);
+    }
+
+    let bestLabel = '';
+    let bestSum = 0;
+    for (const [category, sum] of byCategory.entries()) {
+      if (sum > bestSum) {
+        bestLabel = category;
+        bestSum = sum;
+      }
+    }
+
+    const percent = bestSum > 0 ? (bestSum / spent) * 100 : 0;
+    return { label: bestLabel, percent };
+  });
 
   let addOpen = $state(false);
   let exDesc = $state('');
@@ -146,6 +233,7 @@
   let participantError = $state<string | null>(null);
   let isSavingParticipant = $state(false);
   let expensesLoadedForTripId = $state<string | null>(null);
+  let showAllOverviewExpenses = $state(false);
 
 
   const canSaveExpense = $derived(
@@ -298,6 +386,16 @@
   }
 
   const to = (path: string) => goto(path);
+
+  const overviewExpenses = $derived(
+    showAllOverviewExpenses ? expenses : expenses.slice(0, 3)
+  );
+
+  $effect(() => {
+    if (expenseCount <= 3 && showAllOverviewExpenses) {
+      showAllOverviewExpenses = false;
+    }
+  });
 </script>
 
 <svelte:head>
@@ -340,8 +438,8 @@
       </div>
     </header>
 
-    <div class="overview-grid">
-      <section class="trip-summary card-surface">
+    <div class="trip-detail-layout">
+      <section class="trip-panel trip-panel--overview card-surface">
         <div class="summary-head">
           <h2>Reiseüberblick</h2>
           {#if trip.status}
@@ -363,117 +461,175 @@
           </div>
           <div class="summary-item">
             <span class="summary-label">Budget</span>
-            <span class="summary-value">{(Number(totalBudget) || 0).toFixed(2)} {tripCurrency}</span>
+            <span class="summary-value">{totalBudget.toFixed(2)} {tripCurrency}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">Ausgaben</span>
             <span class="summary-value">{expenseCount}</span>
           </div>
         </div>
-      </section>
 
-      <section class="trip-group card-surface">
-        <div class="group-head">
-          <div>
-            <h2>Reisegruppe</h2>
-            <p class="group-subtitle">Teile die Reise mit den richtigen Personen.</p>
-          </div>
-        </div>
-
-        <div class="participant-list" aria-live="polite">
-          {#each participants as participant (participant.id)}
-            <div class="participant-pill">
-              <span class="participant-avatar" aria-hidden="true">
-                {participant.name.slice(0, 1).toUpperCase()}
-              </span>
-              <span class="participant-name">{participant.name}</span>
+        <div class="overview-expenses card-subsection expenses-card">
+          <div class="expenses-head">
+            <div>
+              <h3>Ausgaben</h3>
+              <p class="section-subtitle">
+                {hasExpenses
+                  ? 'Alle erfassten Ausgaben im Überblick.'
+                  : 'Erfasse deine erste Ausgabe, um dein Budget im Blick zu behalten.'}
+              </p>
             </div>
-          {/each}
-        </div>
-
-        <div class="group-form">
-          <label class="field-label" for="new-participant">Name der Person</label>
-          <div class="group-input">
-            <input
-              id="new-participant"
-              class="input"
-              placeholder="z. B. Alex"
-              bind:value={newParticipantName}
-            />
-            <button
-              type="button"
-              class="pill pill-secondary"
-              onclick={handleAddParticipant}
-              disabled={!canAddParticipant || isSavingParticipant}
-            >
-              {isSavingParticipant ? 'Wird hinzugefügt …' : 'Person hinzufügen'}
-            </button>
+            <div class="expenses-actions">
+              <button type="button" class="pill pill-cta" onclick={openAddModal}>
+                + Ausgabe erfassen
+              </button>
+            </div>
           </div>
-          {#if participantError}
-            <p class="form-error" role="alert">{participantError}</p>
+
+          {#if !hasExpenses}
+            <div class="empty-state">
+              <h3>Noch keine Ausgaben</h3>
+              <p>Erstelle deine erste Ausgabe, um deinen Reiseverlauf zu starten.</p>
+              <button class="pill" type="button" onclick={openAddModal}>+ Ausgabe erfassen</button>
+            </div>
+          {:else}
+            <ul class="expense-list">
+              {#each overviewExpenses as expense (expense.id)}
+                <li class="expense-item">
+                  <div class="expense-meta">
+                    <div class="expense-title">{expense.description}</div>
+                    <div class="expense-sub">
+                      {expense.category || 'Ohne Kategorie'} • {formatDate(expense.date) || expense.date}
+                    </div>
+                  </div>
+                  <div class="expense-amount">
+                    <span>{expense.amount.toFixed(2)} {tripCurrency}</span>
+                    <button
+                      class="expense-delete"
+                      type="button"
+                      title="Ausgabe löschen"
+                      onclick={() => handleDeleteExpense(expense.id)}
+                    >
+                      x
+                    </button>
+                  </div>
+                </li>
+              {/each}
+            </ul>
+            {#if expenseCount > 3}
+              <button
+                type="button"
+                class="pill pill-secondary expenses-toggle"
+                onclick={() => (showAllOverviewExpenses = !showAllOverviewExpenses)}
+              >
+                {showAllOverviewExpenses
+                  ? 'Weniger anzeigen'
+                  : `Weitere anzeigen (${expenseCount - 3})`}
+              </button>
+            {/if}
           {/if}
         </div>
       </section>
 
-      <section class="budget-card card-surface">
+      <section class="trip-panel trip-panel--budget card-surface">
         <div class="budget-head">
-          <h2>Budget Status</h2>
-          <span class="budget-percent">{Math.min(Math.max(Number(progressPct) || 0, 0), 100)}%</span>
+          <div class="budget-head-left">
+            <h2>Budget Status</h2>
+            {#if trip.status}
+              <span class="badge badge--muted">{trip.status}</span>
+            {/if}
+          </div>
+          <span class={`badge ${budgetStatus.className}`}>{budgetStatus.label}</span>
         </div>
 
-        <div class="budget-stats">
-          <div class="stat">
-            <span class="stat-label">Budget</span>
-            <span class="stat-value">{(Number(totalBudget) || 0).toFixed(2)} {tripCurrency}</span>
+        <div class="budget-progress">
+          <div class="budget-progress__info">
+            <span class="budget-progress__value">{percentUsedDisplay.toFixed(0)}%</span>
+            <span class="budget-progress__hint">
+              {remaining <= 0
+                ? 'Budget ausgeschöpft'
+                : `Noch ${remaining.toFixed(2)} ${tripCurrency} verfügbar`}
+            </span>
           </div>
-          <div class="stat">
-            <span class="stat-label">Ausgegeben</span>
-            <span class="stat-value warn">{(Number(spent) || 0).toFixed(2)} {tripCurrency}</span>
+          <div class="progress" aria-label="Budget Fortschritt">
+            <div class="progress__bar" style={`width:${Math.min(percentUsedDisplay, 100)}%`}></div>
           </div>
-          <div class="stat">
-            <span class="stat-label">Verbleibend</span>
-            <span class={`stat-value ${Number(remaining) > 0 ? 'ok' : 'warn'}`}>
-              {(Number(remaining) || 0).toFixed(2)} {tripCurrency}
+        </div>
+
+        <div class="budget-stats-grid">
+          <div class="budget-stat">
+            <span class="label">Gesamtbudget</span>
+            <span class="value">{totalBudget.toFixed(2)} {tripCurrency}</span>
+          </div>
+          <div class="budget-stat">
+            <span class="label">Ausgegeben</span>
+            <span class="value value--warn">{spent.toFixed(2)} {tripCurrency}</span>
+          </div>
+          <div class="budget-stat">
+            <span class="label">Verbleibend</span>
+            <span class={`value ${remaining > 0 ? 'value--ok' : 'value--warn'}`}>
+              {remaining.toFixed(2)} {tripCurrency}
             </span>
           </div>
         </div>
 
-        <div class="progress-wrap" aria-label="Budget Fortschritt">
-          <div class="progress-track">
-            <div class="progress-bar" style={`width:${Math.min(Math.max(Number(progressPct) || 0, 0), 100)}%`}></div>
-          </div>
-          <p class="progress-hint">
-            {Number(remaining) <= 0
-              ? 'Budget ausgeschöpft'
-              : `Noch ${(Number(remaining) || 0).toFixed(2)} ${tripCurrency} verfügbar`}
-          </p>
-        </div>
-
-        <div class="recent-expenses card-surface subtle">
-          <div class="recent-head">
-            <h3>Letzte Ausgaben</h3>
-            {#if hasExpenses}
-              <span class="recent-count">{expenseCount} gesamt</span>
+        {#if trip?.status === 'active' || trip?.status === 'completed'}
+          <div class="budget-daily">
+            <div class="budget-daily__col">
+              <span class="label">Tagesbudget</span>
+              <span class="value">{dailyBudget.toFixed(0)} {tripCurrency}</span>
+            </div>
+            <div class="budget-daily__col">
+              <span class="label">Durchschnitt pro Tag</span>
+              <span class="value">{avgPerDay.toFixed(0)} {tripCurrency}</span>
+            </div>
+            {#if dailyBudget > 0}
+              <div class="budget-daily__note">
+                {#if avgPerDay <= dailyBudget}
+                  Im Rahmen des Tagesbudgets
+                {:else}
+                  Über dem Tagesbudget
+                {/if}
+              </div>
             {/if}
           </div>
+        {/if}
 
-          {#if hasExpenses}
-            <ul class="recent-list">
-              {#each recentExpenses as expense (expense.id)}
-                <li class="recent-item">
-                  <div class="recent-meta">
-                    <p class="recent-title">{expense.description}</p>
-                    <p class="recent-sub">
-                      {formatDate(expense.date) || expense.date}
-                      {#if expense.category}
-                        • {expense.category}
-                      {/if}
-                    </p>
-                  </div>
-                  <span class="recent-amount">{expense.amount.toFixed(2)} {tripCurrency}</span>
-                </li>
-              {/each}
-            </ul>
+        {#if topCategoryInsight.label}
+          <div class="budget-insight">
+            <span class="label">Top Kategorie</span>
+            <span class="value">
+              {topCategoryInsight.label} ({topCategoryInsight.percent.toFixed(0)}%)
+            </span>
+          </div>
+        {/if}
+
+        {#if showLegacyBudgetExtras}
+          <div class="recent-expenses card-surface subtle">
+            <div class="recent-head">
+              <h3>Letzte Ausgaben</h3>
+              {#if hasExpenses}
+                <span class="recent-count">{expenseCount} gesamt</span>
+              {/if}
+            </div>
+
+            {#if hasExpenses}
+              <ul class="recent-list">
+                {#each recentExpenses as expense (expense.id)}
+                  <li class="recent-item">
+                    <div class="recent-meta">
+                      <p class="recent-title">{expense.description}</p>
+                      <p class="recent-sub">
+                        {formatDate(expense.date) || expense.date}
+                        {#if expense.category}
+                          • {expense.category}
+                        {/if}
+                      </p>
+                    </div>
+                    <span class="recent-amount">{expense.amount.toFixed(2)} {tripCurrency}</span>
+                  </li>
+                {/each}
+              </ul>
               <section class="trip-split card-surface">
                 <div class="split-head">
                   <h2>Kostenaufteilung</h2>
@@ -519,62 +675,59 @@
                   </div>
                 {/if}
               </section>
-          {:else}
-            <p class="recent-empty">Noch keine Ausgaben erfasst.</p>
-          {/if}
-        </div>
+            {:else}
+              <p class="recent-empty">Noch keine Ausgaben erfasst.</p>
+            {/if}
+          </div>
+        {/if}
       </section>
     </div>
 
-    <section class="expenses-card card-surface">
-      <div class="expenses-head">
-        <div>
-          <h2>Ausgaben</h2>
-          <p class="section-subtitle">
-            {hasExpenses
-              ? 'Alle erfassten Ausgaben im Überblick.'
-              : 'Erfasse deine erste Ausgabe, um dein Budget im Blick zu behalten.'}
-          </p>
+    {#if showGroupCard}
+      <section class="trip-group card-surface">
+        <div class="group-head">
+          <div>
+            <h2>Reisegruppe</h2>
+            <p class="group-subtitle">Teile die Reise mit den richtigen Personen.</p>
+          </div>
         </div>
-        <div class="expenses-actions">
-          <button type="button" class="pill pill-cta" onclick={openAddModal}>
-            + Ausgabe erfassen
-          </button>
-        </div>
-      </div>
 
-      {#if !hasExpenses}
-        <div class="empty-state">
-          <h3>Noch keine Ausgaben</h3>
-          <p>Erstelle deine erste Ausgabe, um deinen Reiseverlauf zu starten.</p>
-          <button class="pill" type="button" onclick={openAddModal}>+ Ausgabe erfassen</button>
-        </div>
-      {:else}
-        <ul class="expense-list">
-          {#each expenses as expense (expense.id)}
-            <li class="expense-item">
-              <div class="expense-meta">
-                <div class="expense-title">{expense.description}</div>
-                <div class="expense-sub">
-                  {expense.category || 'Ohne Kategorie'} • {formatDate(expense.date) || expense.date}
-                </div>
-              </div>
-              <div class="expense-amount">
-                <span>{expense.amount.toFixed(2)} {tripCurrency}</span>
-                <button
-                  class="expense-delete"
-                  type="button"
-                  title="Ausgabe löschen"
-                  onclick={() => handleDeleteExpense(expense.id)}
-                >
-                  x
-                </button>
-              </div>
-            </li>
+        <div class="participant-list" aria-live="polite">
+          {#each participants as participant (participant.id)}
+            <div class="participant-pill">
+              <span class="participant-avatar" aria-hidden="true">
+                {participant.name.slice(0, 1).toUpperCase()}
+              </span>
+              <span class="participant-name">{participant.name}</span>
+            </div>
           {/each}
-        </ul>
-      {/if}
-    </section>
+        </div>
+
+        <div class="group-form">
+          <label class="field-label" for="new-participant">Name der Person</label>
+          <div class="group-input">
+            <input
+              id="new-participant"
+              class="input"
+              placeholder="z. B. Alex"
+              bind:value={newParticipantName}
+            />
+            <button
+              type="button"
+              class="pill pill-secondary"
+              onclick={handleAddParticipant}
+              disabled={!canAddParticipant || isSavingParticipant}
+            >
+              {isSavingParticipant ? 'Wird hinzugefügt …' : 'Person hinzufügen'}
+            </button>
+          </div>
+          {#if participantError}
+            <p class="form-error" role="alert">{participantError}</p>
+          {/if}
+        </div>
+      </section>
+    {/if}
+
   </section>
 {/if}
 
@@ -625,18 +778,6 @@
           <div>
             <label class="field-label" for="expense-date">Datum</label>
             <input id="expense-date" class="input" type="date" bind:value={exDate} />
-          </div>
-          <div>
-            <label class="field-label" for="expense-payer">Wer hat bezahlt?</label>
-            <select
-              id="expense-payer"
-              class="input"
-              bind:value={payerId}
-            >
-              {#each participants as participant (participant.id)}
-                <option value={participant.id}>{participant.name}</option>
-              {/each}
-            </select>
           </div>
         </div>
 
@@ -726,15 +867,19 @@
     justify-content: flex-end;
   }
 
-  .overview-grid {
+  .trip-detail-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
     gap: 1.4rem;
+    align-items: stretch;
   }
 
-  .trip-summary,
-  .budget-card {
+  .trip-panel {
     gap: 1.25rem;
+  }
+
+  .trip-panel--budget {
+    gap: 1.5rem;
   }
 
   .trip-split {
@@ -755,7 +900,7 @@
 
   .summary-head h2,
   .budget-head h2,
-  .expenses-head h2,
+  .expenses-head h3,
   .split-head h2 {
     margin: 0;
     font-size: 1.35rem;
@@ -888,6 +1033,48 @@
     text-transform: capitalize;
   }
 
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    border: 1px solid transparent;
+  }
+
+  .badge--muted {
+    background: color-mix(in oklab, var(--surface) 92%, var(--text-secondary) 8%);
+    color: var(--text-secondary);
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+
+  .badge--success {
+    background: color-mix(in oklab, var(--success, #16a34a) 20%, var(--surface) 80%);
+    color: var(--success, #16a34a);
+    border-color: color-mix(in oklab, var(--success, #16a34a) 30%, transparent);
+  }
+
+  .badge--warning {
+    background: color-mix(in oklab, var(--warning, #f97316) 18%, var(--surface) 82%);
+    color: var(--warning, #f97316);
+    border-color: color-mix(in oklab, var(--warning, #f97316) 28%, transparent);
+  }
+
+  .badge--danger {
+    background: color-mix(in oklab, var(--danger, #ef4444) 18%, var(--surface) 82%);
+    color: var(--danger, #ef4444);
+    border-color: color-mix(in oklab, var(--danger, #ef4444) 30%, transparent);
+  }
+
+  .badge--neutral {
+    background: color-mix(in oklab, var(--surface) 90%, var(--border) 10%);
+    color: var(--text-secondary);
+    border-color: color-mix(in oklab, var(--border) 75%, transparent);
+  }
+
   .badge-dot {
     width: 0.55rem;
     height: 0.55rem;
@@ -900,6 +1087,21 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
+  }
+
+  .overview-expenses {
+    margin-top: 0.5rem;
+    gap: 1.2rem;
+  }
+
+  .card-subsection {
+    padding: 1.35rem;
+    border-radius: 1.1rem;
+    background: color-mix(in oklab, var(--surface) 96%, var(--primary-soft-bg) 4%);
+    border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
   }
 
   .summary-item {
@@ -929,13 +1131,13 @@
     font-size: 1.1rem;
   }
 
-  .budget-stats {
+  .budget-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.85rem;
   }
 
-  .stat {
+  .budget-stat {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
@@ -945,33 +1147,49 @@
     border: 1px solid color-mix(in oklab, var(--border) 62%, transparent);
   }
 
-  .stat-label {
+  .budget-stat .label {
     font-size: 0.78rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--text-secondary);
   }
 
-  .stat-value {
-    font-size: 1.15rem;
+  .budget-stat .value {
+    font-size: 1.2rem;
     font-weight: 700;
   }
 
-  .stat-value.ok {
+  .budget-stat .value--ok {
     color: var(--success, #16a34a);
   }
 
-  .stat-value.warn {
+  .budget-stat .value--warn {
     color: var(--warning, #f97316);
   }
 
-  .progress-wrap {
+  .budget-progress {
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
   }
 
-  .progress-track {
+  .budget-progress__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .budget-progress__value {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .budget-progress__hint {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .progress {
     width: 100%;
     height: 12px;
     border-radius: 999px;
@@ -980,16 +1198,10 @@
     overflow: hidden;
   }
 
-  .progress-bar {
+  .progress__bar {
     height: 100%;
     background: linear-gradient(90deg, var(--secondary, #38bdf8), var(--primary));
     transition: width 0.25s ease;
-  }
-
-  .progress-hint {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
   }
 
   .recent-expenses {
@@ -1062,7 +1274,64 @@
     font-size: 0.92rem;
   }
 
+  .budget-daily {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.8rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--surface) 92%, var(--primary-soft-bg) 8%);
+    border: 1px solid color-mix(in oklab, var(--border) 62%, transparent);
+  }
+
+  .budget-daily__col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .budget-daily .label {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .budget-daily .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .budget-daily__note {
+    grid-column: 1 / -1;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+  }
+
+  .budget-insight {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%);
+    border: 1px solid color-mix(in oklab, var(--border) 62%, transparent);
+  }
+
+  .budget-insight .label {
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .budget-insight .value {
+    font-weight: 700;
+  }
+
   .expenses-card {
+    width: 100%;
     gap: 1.4rem;
   }
 
@@ -1079,6 +1348,10 @@
     gap: 0.75rem;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  .expenses-toggle {
+    align-self: flex-start;
   }
 
   .section-subtitle {
@@ -1340,7 +1613,8 @@
   :global([data-theme='dark']) .empty-state,
   :global([data-theme='dark']) .input,
   :global([data-theme='dark']) .amount-prefix,
-  :global([data-theme='dark']) .participant-pill {
+  :global([data-theme='dark']) .participant-pill,
+  :global([data-theme='dark']) .card-subsection {
     background: color-mix(in oklab, var(--surface) 65%, var(--surface-soft) 35%);
     border-color: color-mix(in oklab, var(--border) 65%, transparent);
   }
@@ -1368,7 +1642,7 @@
   }
 
   @media (max-width: 1080px) {
-    .overview-grid {
+    .trip-detail-layout {
       grid-template-columns: 1fr;
     }
   }
