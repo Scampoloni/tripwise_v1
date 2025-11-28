@@ -160,6 +160,72 @@
     return diffDays > 0 ? diffDays : 0;
   }
 
+  type DerivedTripStatus = 'planned' | 'active' | 'completed';
+
+  function startOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function parseTripDate(value: string | undefined): Date | null {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return startOfDay(parsed);
+  }
+
+  function isActiveTripRange(tripValue: StoreTrip | null, referenceDate: Date): boolean {
+    if (!tripValue) return false;
+    const start = parseTripDate(tripValue.startDate);
+    const end = parseTripDate(tripValue.endDate);
+    if (!start || !end) return false;
+    const ref = referenceDate.getTime();
+    return start.getTime() <= ref && ref <= end.getTime();
+  }
+
+  function isFutureTripRange(tripValue: StoreTrip | null, referenceDate: Date): boolean {
+    if (!tripValue) return false;
+    const start = parseTripDate(tripValue.startDate);
+    if (!start) return false;
+    return start.getTime() > referenceDate.getTime();
+  }
+
+  function isPastTripRange(tripValue: StoreTrip | null, referenceDate: Date): boolean {
+    if (!tripValue) return false;
+    const end = parseTripDate(tripValue.endDate);
+    if (!end) return false;
+    return end.getTime() < referenceDate.getTime();
+  }
+
+  function inferDerivedTripStatus(
+    value: StoreTrip | null,
+    referenceDate: Date
+  ): DerivedTripStatus | null {
+    if (!value) return null;
+    if (isFutureTripRange(value, referenceDate)) return 'planned';
+    if (isPastTripRange(value, referenceDate)) return 'completed';
+    if (isActiveTripRange(value, referenceDate)) return 'active';
+    return null;
+  }
+
+  const statusLabels: Record<DerivedTripStatus, string> = {
+    planned: 'Geplant',
+    active: 'Aktiv',
+    completed: 'Abgeschlossen'
+  };
+
+  const statusReferenceDate = startOfDay(new Date());
+
+  const derivedTripStatus = $derived.by<DerivedTripStatus | null>(() =>
+    inferDerivedTripStatus(trip, statusReferenceDate)
+  );
+
+  const displayStatus = $derived.by(() => {
+    if (derivedTripStatus) {
+      return statusLabels[derivedTripStatus];
+    }
+    return trip?.status ?? '';
+  });
+
   const dateRange = $derived(computeDateRange(trip));
 
   const categories = ['Unterkunft', 'Essen', 'Transport', 'Erlebnis', 'Shopping', 'Misc'];
@@ -450,10 +516,10 @@
       <section class="trip-panel trip-panel--overview card-surface">
         <div class="summary-head">
           <h2>Reiseüberblick</h2>
-          {#if trip.status}
-            <span class="summary-badge">
+          {#if displayStatus}
+            <span class="summary-badge" data-status={derivedTripStatus ?? undefined}>
               <span class="badge-dot"></span>
-              {trip.status}
+              {displayStatus}
             </span>
           {/if}
         </div>
