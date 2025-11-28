@@ -1,0 +1,272 @@
+<script>
+  // Props
+  export let label = 'Reiseziel';
+  export let placeholder = 'Stadt oder Ort eingeben';
+  export let initialValueName = '';
+  export let onSelect = () => {};
+
+  let query = initialValueName || '';
+  let results = [];
+  let loading = false;
+  let error = '';
+  let showDropdown = false;
+  let hasSearched = false;
+
+  let debounceTimer;
+
+  $: if (initialValueName && !query) {
+    // Falls das Formular einen initialen Wert setzt
+    query = initialValueName;
+  }
+
+  function handleInput(event) {
+    query = event.target.value;
+    error = '';
+    hasSearched = false;
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    if (!query || query.trim().length < 2) {
+      results = [];
+      showDropdown = false;
+      return;
+    }
+
+    debounceTimer = setTimeout(() => {
+      searchPlaces(query.trim());
+    }, 400);
+  }
+
+  async function searchPlaces(q) {
+    loading = true;
+    showDropdown = true;
+    hasSearched = true;
+    results = [];
+    error = '';
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(
+        q
+      )}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      results = data.map((item) => {
+        const addr = item.address || {};
+        const country =
+          addr.country ||
+          addr.country_code?.toUpperCase() ||
+          extractCountryFromDisplayName(item.display_name);
+
+        return {
+          raw: item,
+          name: formatPlaceName(item),
+          lat: Number(item.lat),
+          lon: Number(item.lon),
+          country
+        };
+      });
+    } catch (err) {
+      console.error('PlaceSearchInput search error', err);
+      error = 'Fehler bei der Ortssuche';
+      results = [];
+    } finally {
+      loading = false;
+    }
+  }
+
+  function extractCountryFromDisplayName(displayName) {
+    if (!displayName || typeof displayName !== 'string') return '';
+    const parts = displayName.split(',');
+    const last = parts[parts.length - 1];
+    return last ? last.trim() : '';
+  }
+
+  function formatPlaceName(item) {
+    // Versuch, Stadt + Land schoen anzuzeigen
+    const addr = item.address || {};
+    const cityLike =
+      addr.city ||
+      addr.town ||
+      addr.village ||
+      addr.hamlet ||
+      addr.suburb ||
+      null;
+
+    const country =
+      addr.country ||
+      addr.country_code?.toUpperCase() ||
+      extractCountryFromDisplayName(item.display_name);
+
+    if (cityLike && country) return `${cityLike}, ${country}`;
+    if (item.display_name) return item.display_name;
+    return cityLike || country || '';
+  }
+
+  function handleSelect(place) {
+    query = place.name;
+    showDropdown = false;
+    results = [];
+    error = '';
+    hasSearched = true;
+
+    onSelect({
+      name: place.name,
+      lat: place.lat,
+      lon: place.lon,
+      country: place.country
+    });
+  }
+
+  function handleBlur() {
+    // kleines Delay, damit Klick auf einen Vorschlag noch durch geht
+    setTimeout(() => {
+      showDropdown = false;
+    }, 150);
+  }
+</script>
+
+<div class="place-input">
+  {#if label}
+    <label class="place-input__label">{label}</label>
+  {/if}
+
+  <div class="place-input__field-wrapper">
+    <input
+      class="place-input__field"
+      type="text"
+      bind:value={query}
+      placeholder={placeholder}
+      on:input={handleInput}
+      on:focus={() => (showDropdown = results.length > 0)}
+      on:blur={handleBlur}
+      autocomplete="off"
+    />
+
+    {#if loading}
+      <div class="place-input__status">Suche...</div>
+    {/if}
+  </div>
+
+  {#if showDropdown}
+    <div class="place-input__dropdown">
+      {#if error}
+        <div class="place-input__empty">{error}</div>
+      {:else if results.length === 0 && hasSearched}
+        <div class="place-input__empty">Keine Treffer</div>
+      {:else}
+        {#each results as place}
+          <button
+            type="button"
+            class="place-input__item"
+            on:click={() => handleSelect(place)}
+          >
+            <div class="place-input__item-name">{place.name}</div>
+            {#if place.country}
+              <div class="place-input__item-sub">{place.country}</div>
+            {/if}
+          </button>
+        {/each}
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .place-input {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .place-input__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .place-input__field-wrapper {
+    position: relative;
+  }
+
+  .place-input__field {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.8);
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  .place-input__field:focus {
+    border-color: rgba(59, 130, 246, 0.9);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+  }
+
+  .place-input__status {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .place-input__dropdown {
+    position: absolute;
+    z-index: 20;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+    overflow: hidden;
+    max-height: 260px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .place-input__item {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .place-input__item:hover {
+    background: #f3f4f6;
+  }
+
+  .place-input__item-name {
+    font-size: 0.9rem;
+  }
+
+  .place-input__item-sub {
+    font-size: 0.75rem,
+    color: #6b7280,
+  }
+
+  .place-input__empty {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+</style>

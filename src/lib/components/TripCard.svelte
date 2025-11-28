@@ -61,7 +61,8 @@
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  $: initials = getInitials(trip?.destination || trip?.name || '');
+  $: displayDestination = trip?.destinationName ?? trip?.destination ?? '';
+  $: initials = getInitials(displayDestination || trip?.name || '');
 
   function handleCardClick() {
     const id = trip?.id ?? trip?._id;
@@ -118,8 +119,8 @@
       <div class="trip-header">
         <div class="trip-title-block">
           <h3>{trip?.name}</h3>
-          {#if trip?.destination}
-            <p class="trip-destination">{trip.destination}</p>
+          {#if displayDestination}
+            <p class="trip-destination">{displayDestination}</p>
           {/if}
         </div>
         <div class="trip-percentage" style={`color:${statusColor}`}>

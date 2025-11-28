@@ -59,6 +59,11 @@
     );
   }
 
+  function destinationLabel(trip) {
+    if (!trip) return '';
+    return trip.destinationName ?? trip.destination ?? '';
+  }
+
   function formatCurrency(amount, currency = 'CHF') {
     const numeric = Number(amount) || 0;
     try {
@@ -94,7 +99,7 @@
         return {
           id: trip?.id,
           name: trip?.name ?? 'Unbenannter Trip',
-          destination: trip?.destination ?? '',
+          destinationName: destinationLabel(trip),
           start,
           startFormatted: formatDateShort(start),
           daysUntil,
@@ -251,8 +256,8 @@
 
         {#if nextTrip}
           <h3 class="next-trip-title">{nextTrip.name}</h3>
-          {#if nextTrip.destination}
-            <p class="next-trip-destination">{nextTrip.destination}</p>
+          {#if nextTrip.destinationName}
+            <p class="next-trip-destination">{nextTrip.destinationName}</p>
           {/if}
           <div class="next-trip-date">
             <span>{nextTrip.startFormatted}</span>

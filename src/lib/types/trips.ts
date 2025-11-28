@@ -17,11 +17,17 @@ export type ApiExpense = {
   updatedAt: string;
 };
 
+export type TripStatus = 'planning' | 'planned' | 'active' | 'completed' | 'cancelled';
+
 export type ApiTrip = {
   id: string;
   userId: string | null;
   name: string;
-  destination: string;
+  title: string;
+  destinationName: string;
+  destinationLat?: number;
+  destinationLon?: number;
+  destinationCountry?: string;
   startDate: string;
   endDate: string;
   /**
@@ -31,7 +37,7 @@ export type ApiTrip = {
   totalBudget?: number;
   budget?: number;
   currency: string;
-  status: string;
+  status: TripStatus;
   participants: Participant[];
   createdAt: string;
   updatedAt: string;
@@ -43,8 +49,13 @@ export type StoreExpense = ApiExpense;
 
 export type StoreTrip = {
   id: string;
+  userId: string | null;
   name: string;
-  destination: string;
+  title: string;
+  destinationName: string;
+  destinationLat?: number;
+  destinationLon?: number;
+  destinationCountry?: string;
   flag: string;
   startDate: string;
   endDate: string;
@@ -55,9 +66,25 @@ export type StoreTrip = {
    */
   totalBudget?: number;
   currency: string;
-  status: string;
+  status: TripStatus;
   participants: Participant[];
   expenses: StoreExpense[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type TripPayload = {
+  name: string;
+  title?: string;
+  destinationName: string;
+  destinationLat?: number;
+  destinationLon?: number;
+  destinationCountry?: string;
+  startDate: string;
+  endDate: string;
+  status?: TripStatus;
+  budget?: number;
+  totalBudget?: number;
+  currency: string;
+  participants?: Participant[];
 };

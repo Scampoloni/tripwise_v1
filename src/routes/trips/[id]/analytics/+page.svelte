@@ -8,6 +8,12 @@
   // Route-Param + Trip aus dem Store holen (Runes)
   const tripId = $derived($page.params.id);
   const trip = $derived(($trips ?? []).find(t => t?.id === tripId) ?? null);
+  const displayDestination = $derived(() => {
+    const legacyDestination = trip && typeof trip === 'object' && 'destination' in trip
+      ? /** @type {any} */ (trip).destination
+      : '';
+    return trip?.destinationName ?? legacyDestination ?? '';
+  });
 
   // Kennzahlen fuer diesen Trip
   const totalBudget = $derived(trip?.budget ?? 0);
@@ -15,8 +21,8 @@
   const remaining   = $derived(Math.max(0, totalBudget - totalSpent));
   const hasExpenses = $derived((trip?.expenses ?? []).length > 0);
 
-  let barCanvas;
-  let destroy = () => {};
+  let barCanvas = /** @type {HTMLCanvasElement | null} */ ($state(null));
+  let destroy = /** @type {() => void} */ ($state(() => {}));
 
   onMount(async () => {
     // wenn Trip noch nicht da ist oder keine Ausgaben → kein Chart
@@ -87,7 +93,7 @@
   <section class="analytics">
     <h1>{trip.name} – Analytics</h1>
     <p class="subtitle">
-      {trip.destination} • {trip.startDate} – {trip.endDate}
+      {displayDestination} • {trip.startDate} – {trip.endDate}
     </p>
 
     <div class="grid">

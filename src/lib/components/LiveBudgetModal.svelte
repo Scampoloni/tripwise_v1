@@ -92,10 +92,12 @@
     const expected = budget > 0 ? budget * (daysElapsed / totalDays) : 0;
     const status = budget > 0 ? statusFromRatio(spent, expected) : { label: 'Kein Budget', tone: 'neutral' };
 
+    const destinationLabel = trip.destinationName ?? trip.destination ?? '';
+
     return {
       id: trip.id ?? trip._id ?? `${trip.name ?? 'trip'}-${start.getTime()}`,
       name: trip.name ?? 'Unbenannter Trip',
-      destination: trip.destination ?? '',
+      destinationName: destinationLabel,
       spent,
       budget,
       currency,
@@ -118,10 +120,12 @@
     const budget = Number(trip.budget ?? 0);
     const currency = trip.currency ?? 'CHF';
 
+    const destinationLabel = trip.destinationName ?? trip.destination ?? '';
+
     return {
       id: trip.id ?? trip._id ?? `${trip.name ?? 'trip'}-${start.getTime()}`,
       name: trip.name ?? 'Unbenannter Trip',
-      destination: trip.destination ?? '',
+      destinationName: destinationLabel,
       startsIn: daysUntilStart,
       startDate: formatDate(start),
       budget,
@@ -190,8 +194,8 @@
               <div class="trip-top">
                 <div class="trip-heading">
                   <h5>{trip.name}</h5>
-                  {#if trip.destination}
-                    <p class="trip-sub">{trip.destination}</p>
+                  {#if trip.destinationName}
+                    <p class="trip-sub">{trip.destinationName}</p>
                   {/if}
                 </div>
                 <span class={`status status--${trip.statusTone}`}>{trip.statusText}</span>
@@ -242,8 +246,8 @@
               <div class="trip-top">
                 <div class="trip-heading">
                   <h5>{trip.name}</h5>
-                  {#if trip.destination}
-                    <p class="trip-sub">{trip.destination}</p>
+                  {#if trip.destinationName}
+                    <p class="trip-sub">{trip.destinationName}</p>
                   {/if}
                 </div>
                 <span class="starts-in">Startet in {trip.startsIn} {trip.startsIn === 1 ? 'Tag' : 'Tagen'}</span>

@@ -65,9 +65,14 @@
     tripToDelete = null;
   }
 
+  function destinationLabel(trip) {
+    if (!trip) return '';
+    return trip.destinationName ?? trip.destination ?? '';
+  }
+
   function matchesSearch(trip, term) {
     const name = (trip?.name ?? '').toLowerCase();
-    const destination = (trip?.destination ?? '').toLowerCase();
+    const destination = destinationLabel(trip).toLowerCase();
     return name.includes(term) || destination.includes(term);
   }
 

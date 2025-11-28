@@ -56,7 +56,23 @@ export async function POST({ request, locals }) {
       return json({ errors }, { status: 400 });
     }
 
-    const trip = await createTrip(body, userId);
+    const payload = {
+      name: body.name?.trim(),
+      title: body.title?.trim(),
+      destinationName: body.destinationName?.trim(),
+      destinationLat: body.destinationLat,
+      destinationLon: body.destinationLon,
+      destinationCountry: body.destinationCountry ?? null,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      status: body.status,
+      budget: body.budget,
+      totalBudget: body.totalBudget,
+      currency: body.currency,
+      participants: body.participants
+    };
+
+    const trip = await createTrip(payload, userId);
     return json({
       ...trip,
       participants: ensureParticipants(trip.participants)

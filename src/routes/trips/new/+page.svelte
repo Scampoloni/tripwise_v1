@@ -1,14 +1,18 @@
 <script lang="ts">
   import { addTrip } from '$lib/stores/trips.js';
   import { goto } from '$app/navigation';
-  import BackButton from "$lib/components/BackButton.svelte";
+  import BackButton from '$lib/components/BackButton.svelte';
+  import PlaceSearchInput from '$lib/components/PlaceSearchInput.svelte';
 
   // Wizard
   let step = $state(1);
 
   // Form
   let name = $state('');
-  let destination = $state('');
+  let destinationName = $state('');
+  let destinationLat = $state<number | null>(null);
+  let destinationLon = $state<number | null>(null);
+  let destinationCountry = $state('');
   let startDate = $state('');
   let endDate = $state('');
   let budgetStr = $state('');
@@ -27,8 +31,16 @@
     return Number.isFinite(v) && v >= 0 ? v : null;
   }
 
-  const validStep1 = $derived(!!name && !!destination && !!startDate && !!endDate);
+  const validStep1 = $derived(!!name && !!destinationName && !!startDate && !!endDate);
   const validStep2 = $derived(parseBudget(budgetStr) !== null);
+
+  function handlePlaceSelect(place: { name: string; lat: number; lon: number; country?: string }) {
+    destinationName = place.name;
+    destinationLat = typeof place.lat === 'number' ? place.lat : null;
+    destinationLon = typeof place.lon === 'number' ? place.lon : null;
+    destinationCountry = place.country ?? '';
+    console.log('Selected place for new trip', place);
+  }
 
   function next() {
     if ((step === 1 && validStep1) || (step === 2 && validStep2)) step++;
@@ -47,7 +59,10 @@
       // 🔥 Hier geht es jetzt ueber die API in die DB
       const created = await addTrip({
         name,
-        destination,
+        destinationName,
+        destinationLat: destinationLat ?? undefined,
+        destinationLon: destinationLon ?? undefined,
+        destinationCountry: destinationCountry || undefined,
         startDate,
         endDate,
         budget,
@@ -117,13 +132,17 @@
           </div>
 
           <div class="field">
-            <label for="trip-destination">Zielort</label>
-            <input
-              id="trip-destination"
-              class="input"
-              bind:value={destination}
-              placeholder="Land oder Stadt"
+            <PlaceSearchInput
+              label="Reiseziel"
+              placeholder="Stadt oder Ort eingeben"
+              initialValueName={destinationName}
+              onSelect={handlePlaceSelect}
             />
+            {#if destinationLat !== null && destinationLon !== null}
+              <p class="place-debug">
+                Ausgewaehlter Ort: {destinationName} ({destinationLat}, {destinationLon}) {destinationCountry}
+              </p>
+            {/if}
           </div>
 
           <div class="field-row">
@@ -198,7 +217,7 @@
 
           <div class="summary">
             <div><span>Titel</span><strong>{name}</strong></div>
-            <div><span>Ziel</span><strong>{destination}</strong></div>
+            <div><span>Ziel</span><strong>{destinationName}</strong></div>
             <div><span>Zeitraum</span><strong>{startDate} – {endDate}</strong></div>
             <div><span>Budget</span><strong>{parseBudget(budgetStr) ?? 0} {currency}</strong></div>
             {#if note}<div class="note"><span>Notiz</span><em>{note}</em></div>{/if}
@@ -224,7 +243,7 @@
 
       <div class="preview-body">
         <div class="preview-title">{name || 'Neuer Trip'}</div>
-        <div class="preview-meta">{destination || 'Ziel noch offen'}</div>
+        <div class="preview-meta">{destinationName || 'Ziel noch offen'}</div>
         <div class="preview-dates">{startDate || '—'} – {endDate || '—'}</div>
         <div class="preview-budget">
           Budget: <strong>{parseBudget(budgetStr) ?? 0} {currency}</strong>
@@ -389,6 +408,12 @@
     font-weight: 600;
     font-size: 0.95rem;
     color: color-mix(in oklab, var(--text) 78%, var(--text-secondary) 22%);
+  }
+
+  .place-debug {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
   }
 
   .input {

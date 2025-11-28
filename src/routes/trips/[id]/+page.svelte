@@ -43,6 +43,14 @@
 
   const trip = $derived<StoreTrip | null>(tripFromStore ?? tripFromServer ?? null);
 
+  const displayDestination = $derived.by(() => {
+    const legacyDestination =
+      trip && typeof trip === 'object' && 'destination' in trip
+        ? /** @type {any} */ (trip).destination
+        : '';
+    return trip?.destinationName ?? legacyDestination ?? '';
+  });
+
   const tripCurrency = $derived<string>(trip?.currency ?? 'CHF');
 
   const fallbackParticipants: Participant[] = [{ id: 'me', name: 'Du' }];
@@ -276,7 +284,7 @@
     const serverTrip = tripFromServer;
     if (!serverTrip) return;
 
-    trips.update((list) => {
+    trips.update((list: StoreTrip[]) => {
       if (list.some((t) => t.id === serverTrip.id)) {
         return list;
       }
@@ -417,8 +425,8 @@
     <header class="page-header card-surface">
       <div class="page-headings">
         <h1>{trip.name}</h1>
-        {#if trip.destination}
-          <p class="page-subtitle">{trip.destination}</p>
+        {#if displayDestination}
+          <p class="page-subtitle">{displayDestination}</p>
         {/if}
         {#if dateRange}
           <p class="page-meta">{dateRange}</p>
@@ -453,7 +461,7 @@
         <div class="summary-grid">
           <div class="summary-item">
             <span class="summary-label">Destination</span>
-            <span class="summary-value">{trip.destination || '—'}</span>
+            <span class="summary-value">{displayDestination || '—'}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">Zeitraum</span>

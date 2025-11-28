@@ -7,6 +7,7 @@ import { browser } from '$app/environment';
 /** @typedef {import('$lib/types/trips').StoreTrip} StoreTrip */
 /** @typedef {import('$lib/types/trips').StoreExpense} StoreExpense */
 /** @typedef {import('$lib/types/trips').Participant} Participant */
+/** @typedef {import('$lib/types/trips').TripPayload} TripPayload */
 /** @typedef {import('$lib/types/trips').ApiTrip} ApiTrip */
 /** @typedef {import('$lib/types/trips').ApiExpense} ApiExpense */
 
@@ -56,13 +57,12 @@ export function resetTrips() {
 }
 
 /**
- * Mapping, API Trip → Store Trip
+ * Mapping, API Trip -> Store Trip
  * @param {ApiTrip} apiTrip
  * @returns {StoreTrip}
  */
 function mapApiTripToStoreTrip(apiTrip) {
-  // apiTrip kommt in deinem Flow immer gesetzt, dieser Guard ist nur defensive
-  // @ts-ignore
+  // @ts-ignore defensive fallback
   if (!apiTrip) return null;
 
   /** @type {Participant[]} */
@@ -71,22 +71,30 @@ function mapApiTripToStoreTrip(apiTrip) {
       ? apiTrip.participants
       : [{ id: 'me', name: 'Du' }];
 
-  /** @type {StoreExpense[]} */
-  const expenses = Array.isArray(apiTrip.expenses) ? apiTrip.expenses : [];
+  const expenses = Array.isArray(apiTrip.expenses)
+    ? apiTrip.expenses.map(mapApiExpenseToStoreExpense)
+    : [];
 
-  // Budget kommt aktuell entweder als `budget` (neu) oder `totalBudget` (legacy) aus der API.
-  // Wir normalisieren beides auf StoreTrip.budget, damit jede UI-Berechnung denselben Wert nutzt.
   const rawBudget = Number(apiTrip.budget ?? apiTrip.totalBudget ?? 0);
   const budget = Number.isFinite(rawBudget) ? rawBudget : 0;
   const legacyTotal = typeof apiTrip.totalBudget === 'number' ? apiTrip.totalBudget : undefined;
+  const legacyDestination = /** @type {any} */ (apiTrip)?.destination;
 
   return {
     id: apiTrip.id,
+    userId: apiTrip.userId ?? null,
     name: apiTrip.name,
-    destination: apiTrip.destination,
+    title: apiTrip.title ?? apiTrip.name,
+    destinationName: apiTrip.destinationName ?? legacyDestination ?? '',
+    destinationLat:
+      typeof apiTrip.destinationLat === 'number' ? apiTrip.destinationLat : undefined,
+    destinationLon:
+      typeof apiTrip.destinationLon === 'number' ? apiTrip.destinationLon : undefined,
+    destinationCountry:
+      typeof apiTrip.destinationCountry === 'string' ? apiTrip.destinationCountry : undefined,
     // optionale Flag fuer dein UI
     // @ts-ignore
-    flag: apiTrip.flag || '🌍',
+    flag: apiTrip.flag || '\uD83C\uDF0D',
     startDate: apiTrip.startDate || '',
     endDate: apiTrip.endDate || '',
     budget,
@@ -101,12 +109,12 @@ function mapApiTripToStoreTrip(apiTrip) {
 }
 
 /**
- * Mapping, API Expense → Store Expense
+ * Mapping, API Expense -> Store Expense
  * @param {ApiExpense} apiExp
  * @returns {StoreExpense}
  */
 function mapApiExpenseToStoreExpense(apiExp) {
-  // @ts-ignore
+  // @ts-ignore defensive fallback
   if (!apiExp) return null;
   return {
     id: apiExp.id,
@@ -178,28 +186,28 @@ export async function loadTrips() {
 
 /**
  * Trip erstellen
- * @param {{
- *  name: string;
- *  destination: string;
- *  startDate?: string;
- *  endDate?: string;
- *  budget?: number;
- *  totalBudget?: number;
- *  currency?: string;
- *  status?: string;
- * }} tripInput
+ * @param {TripPayload} tripInput
  */
 export async function addTrip(tripInput) {
   if (!browser) return;
 
+  const normalizedBudget = Number(tripInput.budget ?? tripInput.totalBudget ?? 0);
   const payload = {
     name: tripInput.name,
-    destination: tripInput.destination,
+    title: tripInput.title ?? tripInput.name,
+    destinationName: tripInput.destinationName,
+    destinationLat:
+      typeof tripInput.destinationLat === 'number' ? tripInput.destinationLat : undefined,
+    destinationLon:
+      typeof tripInput.destinationLon === 'number' ? tripInput.destinationLon : undefined,
+    destinationCountry:
+      typeof tripInput.destinationCountry === 'string' ? tripInput.destinationCountry : undefined,
     startDate: tripInput.startDate || '',
     endDate: tripInput.endDate || '',
-    totalBudget: tripInput.budget ?? tripInput.totalBudget ?? 0,
+    budget: normalizedBudget,
     currency: tripInput.currency || 'CHF',
-    status: tripInput.status || 'planning'
+    status: tripInput.status || 'planning',
+    participants: tripInput.participants || []
   };
 
   const apiTrip = /** @type {ApiTrip} */ (
@@ -219,7 +227,11 @@ export async function addTrip(tripInput) {
  * @param {string} id
  * @param {{
  *  name?: string;
- *  destination?: string;
+ *  title?: string;
+ *  destinationName?: string;
+ *  destinationLat?: number | null;
+ *  destinationLon?: number | null;
+ *  destinationCountry?: string | null;
  *  startDate?: string;
  *  endDate?: string;
  *  budget?: number;
@@ -231,16 +243,21 @@ export async function addTrip(tripInput) {
 export async function updateTrip(id, updates) {
   if (!browser) return;
 
-  const payload = {
-    ...(updates.name && { name: updates.name }),
-    ...(updates.destination && { destination: updates.destination }),
-    ...(updates.startDate && { startDate: updates.startDate }),
-    ...(updates.endDate && { endDate: updates.endDate }),
-    ...(updates.budget !== undefined && { totalBudget: updates.budget }),
-    ...(updates.currency && { currency: updates.currency }),
-    ...(updates.status && { status: updates.status }),
-    ...(updates.participants && { participants: updates.participants })
-  };
+  /** @type {Record<string, unknown>} */
+  const payload = {};
+
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.destinationName !== undefined) payload.destinationName = updates.destinationName;
+  if (updates.destinationLat !== undefined) payload.destinationLat = updates.destinationLat;
+  if (updates.destinationLon !== undefined) payload.destinationLon = updates.destinationLon;
+  if (updates.destinationCountry !== undefined) payload.destinationCountry = updates.destinationCountry;
+  if (updates.startDate !== undefined) payload.startDate = updates.startDate;
+  if (updates.endDate !== undefined) payload.endDate = updates.endDate;
+  if (updates.budget !== undefined) payload.budget = updates.budget;
+  if (updates.currency !== undefined) payload.currency = updates.currency;
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.participants !== undefined) payload.participants = updates.participants;
 
   const apiTrip = /** @type {ApiTrip} */ (
     await fetchJSON(`/api/trips/${id}`, {

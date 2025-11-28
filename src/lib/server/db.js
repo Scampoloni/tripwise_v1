@@ -122,8 +122,17 @@ function mapTrip(doc) {
   return {
     id: doc._id.toString(),
     userId: doc.userId ? doc.userId.toString() : null,
-    name: doc.name,
-    destination: doc.destination,
+    name: doc.name ?? doc.title ?? '',
+    title: doc.title ?? doc.name ?? '',
+    destinationName: doc.destinationName ?? doc.destination ?? '',
+    // Neue Geodaten (koennen null oder string aus der DB sein)
+    destinationLat: doc.destinationLat != null
+      ? Number(doc.destinationLat)
+      : undefined,
+    destinationLon: doc.destinationLon != null
+      ? Number(doc.destinationLon)
+      : undefined,
+    destinationCountry: doc.destinationCountry ?? undefined,
     startDate: doc.startDate || '',
     endDate: doc.endDate || '',
     totalBudget: Number(doc.totalBudget) || 0,
@@ -186,11 +195,25 @@ export async function createTrip(data, userId) {
 
   const insertDoc = {
     userId: userId ? new ObjectId(userId) : null,
-    name: data.name,
-    destination: data.destination || '',
+    name: data.name ?? data.title ?? '',
+    title: data.title ?? data.name ?? '',
+    destinationName: data.destinationName?.trim() || (data.destination ?? ''),
+    destinationLat:
+      typeof data.destinationLat === 'number'
+        ? data.destinationLat
+        : data.destinationLat != null
+          ? Number(data.destinationLat)
+          : null,
+    destinationLon:
+      typeof data.destinationLon === 'number'
+        ? data.destinationLon
+        : data.destinationLon != null
+          ? Number(data.destinationLon)
+          : null,
+    destinationCountry: data.destinationCountry ?? null,
     startDate: data.startDate || '',
     endDate: data.endDate || '',
-    totalBudget: Number(data.totalBudget) || 0,
+    totalBudget: Number(data.totalBudget ?? data.budget ?? 0) || 0,
     currency: data.currency || 'CHF',
     status: data.status || 'planning',
     participants: normalizeParticipants(data.participants),
@@ -210,21 +233,69 @@ export async function updateTrip(id, data, userId) {
     return null; // Kein User = Kein Update
   }
 
-  const updateDoc = {
-    ...(data.name && { name: data.name }),
-    ...(data.destination && { destination: data.destination }),
-    ...(data.startDate && { startDate: data.startDate }),
-    ...(data.endDate && { endDate: data.endDate }),
-    ...(data.totalBudget !== undefined && {
-      totalBudget: Number(data.totalBudget),
-    }),
-    ...(data.currency && { currency: data.currency }),
-    ...(data.status && { status: data.status }),
-    ...(data.participants !== undefined && {
-      participants: normalizeParticipants(data.participants)
-    }),
-    updatedAt: now
-  };
+  const setDoc = { updatedAt: now };
+
+  if (data.name !== undefined) {
+    setDoc.name = data.name;
+  }
+
+  if (data.title !== undefined) {
+    setDoc.title = data.title;
+  }
+
+  if (data.destinationName !== undefined) {
+    setDoc.destinationName = data.destinationName?.trim() || '';
+  } else if (data.destination !== undefined) {
+    setDoc.destinationName = data.destination?.trim() || '';
+  }
+
+  if (data.destinationLat !== undefined) {
+    setDoc.destinationLat =
+      typeof data.destinationLat === 'number'
+        ? data.destinationLat
+        : data.destinationLat == null
+          ? null
+          : Number(data.destinationLat);
+  }
+
+  if (data.destinationLon !== undefined) {
+    setDoc.destinationLon =
+      typeof data.destinationLon === 'number'
+        ? data.destinationLon
+        : data.destinationLon == null
+          ? null
+          : Number(data.destinationLon);
+  }
+
+  if (data.destinationCountry !== undefined) {
+    setDoc.destinationCountry = data.destinationCountry;
+  }
+
+  if (data.startDate !== undefined) {
+    setDoc.startDate = data.startDate;
+  }
+
+  if (data.endDate !== undefined) {
+    setDoc.endDate = data.endDate;
+  }
+
+  if (data.totalBudget !== undefined) {
+    setDoc.totalBudget = Number(data.totalBudget) || 0;
+  } else if (data.budget !== undefined) {
+    setDoc.totalBudget = Number(data.budget) || 0;
+  }
+
+  if (data.currency !== undefined) {
+    setDoc.currency = data.currency;
+  }
+
+  if (data.status !== undefined) {
+    setDoc.status = data.status;
+  }
+
+  if (data.participants !== undefined) {
+    setDoc.participants = normalizeParticipants(data.participants);
+  }
 
   // Update nur, wenn Trip dem User gehoert
   const result = await col.updateOne(
@@ -232,7 +303,7 @@ export async function updateTrip(id, data, userId) {
       _id: new ObjectId(id),
       userId: new ObjectId(userId)
     },
-    { $set: updateDoc }
+    { $set: setDoc }
   );
 
   if (result.matchedCount === 0) {
