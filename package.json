@@ -21,6 +21,8 @@
 	"dependencies": {
 		"chart.js": "^4.5.1",
 		"mongodb": "^7.0.0",
+		"three": "^0.181.2",
+		"three-globe": "^2.45.0",
 		"zod": "^4.1.12"
 	}
 }

@@ -1,11 +1,31 @@
 <script>
+  import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import { trips } from '$lib/stores/trips.js';
   import LiveBudgetModal from '$lib/components/LiveBudgetModal.svelte';
   import { calculateSpent } from '$lib/utils/calculations.js';
-  import { convertToChf } from '$lib/utils/currency.js';
-  import { goto } from '$app/navigation';
+  import { convertWithCachedRates, loadRatesIfNeeded } from '$lib/utils/currency.js';
 
   const allTrips = $derived($trips ?? []);
+  const BASE_CURRENCY = 'CHF';
+  let fxRefreshKey = $state(0);
+
+  function toBaseCurrency(amount, currency = BASE_CURRENCY) {
+    fxRefreshKey;
+    return convertWithCachedRates(amount, currency || BASE_CURRENCY, BASE_CURRENCY);
+  }
+
+  onMount(async () => {
+    if (!browser) return;
+    try {
+      await loadRatesIfNeeded(BASE_CURRENCY);
+    } catch (err) {
+      console.warn('FX rates not available, using fallback', err);
+    } finally {
+      fxRefreshKey += 1;
+    }
+  });
 
   const MS_PER_DAY = 86_400_000;
 
@@ -43,7 +63,7 @@
 
   function budgetToChf(trip) {
     if (!trip) return 0;
-    return convertToChf(trip.budget ?? 0, trip.currency);
+    return toBaseCurrency(trip.budget ?? 0, trip.currency);
   }
 
   function spentToChf(trip) {
@@ -51,10 +71,11 @@
     const expenses = Array.isArray(trip.expenses) ? trip.expenses : [];
     if (expenses.length === 0) {
       const fallback = Number(calculateSpent(trip.expenses ?? [])) || 0;
-      return convertToChf(fallback, trip.currency);
+      return toBaseCurrency(fallback, trip.currency);
     }
     return expenses.reduce(
-      (sum, exp) => sum + convertToChf(exp?.amount ?? 0, exp?.currency || trip.currency || 'CHF'),
+      (sum, exp) =>
+        sum + toBaseCurrency(exp?.amount ?? 0, exp?.currency || trip.currency || BASE_CURRENCY),
       0
     );
   }
@@ -64,7 +85,7 @@
     return trip.destinationName ?? trip.destination ?? '';
   }
 
-  function formatCurrency(amount, currency = 'CHF') {
+  function formatCurrency(amount, currency = BASE_CURRENCY) {
     const numeric = Number(amount) || 0;
     try {
       return new Intl.NumberFormat('de-CH', {
@@ -94,7 +115,8 @@
         const start = parseDate(trip?.startDate);
         if (!start || start <= today) return null;
         const budget = Number(trip?.budget) || 0;
-        const budgetChf = convertToChf(budget, trip?.currency || 'CHF');
+        const fallbackCurrency = trip?.currency || BASE_CURRENCY;
+        const budgetChf = toBaseCurrency(budget, fallbackCurrency);
         const daysUntil = Math.max(0, diffInDays(today, start));
         return {
           id: trip?.id,
@@ -109,11 +131,11 @@
               : daysUntil === 1
               ? 'in 1 Tag'
               : `in ${daysUntil} Tagen`,
-          currency: trip?.currency || 'CHF',
+          currency: fallbackCurrency,
           budget,
           budgetChf,
-          budgetFormatted: formatCurrency(budget, trip?.currency || 'CHF'),
-          budgetChfFormatted: formatCurrency(budgetChf, 'CHF'),
+          budgetFormatted: formatCurrency(budget, fallbackCurrency),
+          budgetChfFormatted: formatCurrency(budgetChf, BASE_CURRENCY),
           flag: trip?.flag || '🌍'
         };
       })
@@ -212,7 +234,7 @@
                 {liveOverview.count} {liveOverview.count === 1 ? 'aktiver Trip' : 'aktive Trips'}
               </h2>
               <p class="overview-subtitle">
-                {formatCurrency(liveOverview.totalSpentChf, 'CHF')} von {formatCurrency(liveOverview.totalBudgetChf, 'CHF')} genutzt
+                {formatCurrency(liveOverview.totalSpentChf, BASE_CURRENCY)} von {formatCurrency(liveOverview.totalBudgetChf, BASE_CURRENCY)} genutzt
               </p>
             {:else}
               <h2 class="overview-title">Keine laufenden Reisen</h2>
@@ -237,11 +259,11 @@
         <div class="overview-metrics">
           <div>
             <span class="metric-label">Budget gesamt</span>
-            <span class="metric-value">{formatCurrency(liveOverview.totalBudgetChf, 'CHF')}</span>
+            <span class="metric-value">{formatCurrency(liveOverview.totalBudgetChf, BASE_CURRENCY)}</span>
           </div>
           <div>
             <span class="metric-label">Ausgegeben</span>
-            <span class="metric-value">{formatCurrency(liveOverview.totalSpentChf, 'CHF')}</span>
+            <span class="metric-value">{formatCurrency(liveOverview.totalSpentChf, BASE_CURRENCY)}</span>
           </div>
         </div>
       </article>
@@ -282,7 +304,7 @@
     <div class="secondary-row">
       <article class="totals-card card-surface">
         <span class="card-label">Reiseausgaben 2025</span>
-        <h3 class="totals-value">{formatCurrency(spent2025.totalSpent, 'CHF')}</h3>
+        <h3 class="totals-value">{formatCurrency(spent2025.totalSpent, BASE_CURRENCY)}</h3>
         <p class="totals-subtitle">
           über {spent2025.count === 1 ? '1 Trip' : `${spent2025.count} Trips`} mit Start 2025
         </p>

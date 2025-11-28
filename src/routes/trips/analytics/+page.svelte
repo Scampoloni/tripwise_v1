@@ -2,10 +2,27 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { trips } from '$lib/stores/trips.js';
-  import { convertToChf } from '$lib/utils/currency.js';
+  import { convertWithCachedRates, loadRatesIfNeeded } from '$lib/utils/currency.js';
   import BackButton from '$lib/components/BackButton.svelte';
 
   const allTrips = $derived($trips ?? []);
+  const BASE_CURRENCY = 'CHF';
+  let fxRefreshKey = $state(0);
+
+  function toBaseCurrency(amount, currency = BASE_CURRENCY) {
+    fxRefreshKey;
+    return convertWithCachedRates(amount, currency || BASE_CURRENCY, BASE_CURRENCY);
+  }
+
+  async function ensureRates() {
+    try {
+      await loadRatesIfNeeded(BASE_CURRENCY);
+    } catch (err) {
+      console.warn('FX rates unavailable, using fallback', err);
+    } finally {
+      fxRefreshKey += 1;
+    }
+  }
 
   let pieCanvas;
   let barCanvas;
@@ -27,7 +44,7 @@
       const fallbackCurrency = t?.currency || 'CHF';
       for (const e of (t.expenses ?? [])) {
         const key = e?.category ?? 'Other';
-        const amountChf = convertToChf(e?.amount ?? 0, e?.currency || fallbackCurrency);
+        const amountChf = toBaseCurrency(e?.amount ?? 0, e?.currency || fallbackCurrency);
         categories[key] = (categories[key] ?? 0) + amountChf;
       }
     }
@@ -62,7 +79,7 @@
     const totalsPerTrip = allTrips.map((t) => {
       const fallbackCurrency = t?.currency || 'CHF';
       return (t.expenses ?? []).reduce(
-        (sum, exp) => sum + convertToChf(exp?.amount ?? 0, exp?.currency || fallbackCurrency),
+        (sum, exp) => sum + toBaseCurrency(exp?.amount ?? 0, exp?.currency || fallbackCurrency),
         0
       );
     });
@@ -73,7 +90,7 @@
         labels: allTrips.map((t) => t.name ?? t.id),
         datasets: [
           {
-            label: 'Spent (CHF)',
+            label: `Spent (${BASE_CURRENCY})`,
             data: totalsPerTrip,
             backgroundColor: '#60a5fa'
           }
@@ -92,6 +109,8 @@
   onMount(async () => {
     if (!browser) return;
 
+    ensureRates();
+
     try {
       const mod = await import('chart.js/auto');
       Chart = mod.default;
@@ -108,6 +127,7 @@
 
   // Wenn Trips sich aendern (z.B. nach Laden aus dem Backend), Charts neu bauen
   $effect(() => {
+    fxRefreshKey;
     if (!Chart) return;
     buildCharts();
   });
