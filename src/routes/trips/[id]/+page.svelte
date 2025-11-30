@@ -553,11 +553,6 @@
                   : 'Erfasse deine erste Ausgabe, um dein Budget im Blick zu behalten.'}
               </p>
             </div>
-            <div class="expenses-actions">
-              <button type="button" class="pill pill-cta" onclick={openAddModal}>
-                + Ausgabe erfassen
-              </button>
-            </div>
           </div>
 
           {#if !hasExpenses}
@@ -609,9 +604,6 @@
         <div class="budget-head">
           <div class="budget-head-left">
             <h2>Budget Status</h2>
-            {#if trip.status}
-              <span class="badge badge--muted">{trip.status}</span>
-            {/if}
           </div>
           <span class={`badge ${budgetStatus.className}`}>{budgetStatus.label}</span>
         </div>

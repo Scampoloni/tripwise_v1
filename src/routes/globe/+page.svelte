@@ -15,12 +15,14 @@
 </svelte:head>
 
 <section class="page-shell" data-animate="fadeUp">
-  <header class="page-header card-surface">
-    <div class="page-headings">
+  <header class="page-header card-surface page-header--centered">
+    <div class="page-headings page-headings--center">
       <h1>World Globe</h1>
       <p class="page-subtitle">Alle Trips mit Koordinaten auf einen Blick</p>
     </div>
-    <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>Zurück zum Dashboard</button>
+    <div class="actions actions--center">
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>Zurück zum Dashboard</button>
+    </div>
   </header>
 
   <article class="stats-card card-surface">
@@ -71,6 +73,17 @@
     padding: 1.6rem 1.9rem;
   }
 
+  .page-headings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .page-headings--center {
+    align-items: center;
+    text-align: center;
+  }
+
   .page-headings h1 {
     margin: 0;
     font-size: clamp(2rem, 4vw, 2.5rem);
@@ -81,11 +94,28 @@
     color: var(--text-secondary);
   }
 
+  .page-header--centered {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
   .card-surface {
     background: var(--surface);
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
     box-shadow: var(--shadow-soft);
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .actions--center {
+    justify-content: center;
   }
 
   .stats-card {

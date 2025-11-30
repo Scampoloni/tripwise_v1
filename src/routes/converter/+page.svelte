@@ -203,8 +203,8 @@
 
       {#if showAccuracy}
         <div class="accuracy-text">
-          Live-Kurse kommen ueber die Frankfurter API (EZB). Bei Ausfall nutzen wir lokale
-          Fallback-Kurse. Werte koennen leicht von den Kursen deiner Bank abweichen.
+          Live-Kurse kommen über die Frankfurter API (EZB). Bei Ausfall nutzen wir lokale
+          Fallback-Kurse. Werte können leicht von den Kursen deiner Bank abweichen.
         </div>
       {/if}
     </div>

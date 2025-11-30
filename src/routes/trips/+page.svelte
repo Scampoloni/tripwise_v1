@@ -132,14 +132,19 @@
 </svelte:head>
 
 <section class="page-shell" data-animate="fadeUp">
-  <header class="page-header card-surface">
-    <div class="page-headings">
+  <header class="page-header card-surface page-header--centered">
+    <div class="page-headings page-headings--center">
       <h1>Trip List</h1>
       <p class="page-subtitle">Alle Reisen im Überblick</p>
     </div>
-    <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
-      New Trip
-    </button>
+    <div class="actions actions--center">
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>
+        Zurück zum Dashboard
+      </button>
+      <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
+        New Trip
+      </button>
+    </div>
   </header>
 
   <ConfirmDialog
@@ -270,6 +275,11 @@
     gap: 0.35rem;
   }
 
+  .page-headings--center {
+    align-items: center;
+    text-align: center;
+  }
+
   .page-headings h1 {
     margin: 0;
     font-size: clamp(1.9rem, 3vw, 2.3rem);
@@ -280,6 +290,23 @@
     margin: 0;
     color: var(--text-secondary);
     font-size: 1rem;
+  }
+
+  .page-header--centered {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .actions--center {
+    justify-content: center;
   }
 
   .pill {

@@ -8,7 +8,7 @@
   // Route-Param + Trip aus dem Store holen (Runes)
   const tripId = $derived($page.params.id);
   const trip = $derived(($trips ?? []).find(t => t?.id === tripId) ?? null);
-  const displayDestination = $derived(() => {
+  const displayDestination = $derived.by(() => {
     const legacyDestination = trip && typeof trip === 'object' && 'destination' in trip
       ? /** @type {any} */ (trip).destination
       : '';
