@@ -220,6 +220,9 @@
       <button class="pill pill-secondary" type="button" onclick={() => goto('/trips/analytics')}>
         Analytics
       </button>
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/globe')}>
+        Globe
+      </button>
     </div>
   </header>
 

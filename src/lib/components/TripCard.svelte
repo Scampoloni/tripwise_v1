@@ -24,14 +24,14 @@
   $: cardBudget = rawBudget > 0 ? rawBudget : 0;
 
   // Ausgaben: Summe aller amount Werte
-  $: cardSpent = expenses.reduce((sum, exp) => {
+  $: rawCardSpent = expenses.reduce((sum, exp) => {
     const amount = Number(exp?.amount ?? 0);
     const s = Number.isFinite(sum) ? sum : 0;
     const v = Number.isFinite(amount) ? amount : 0;
     return s + v;
   }, 0);
 
-  $: cardSpent = Number.isFinite(cardSpent) ? cardSpent : 0;
+  $: cardSpent = Number.isFinite(rawCardSpent) ? rawCardSpent : 0;
 
   // Prozent
   $: percentUsed = calculatePercentUsed(cardSpent, cardBudget);
