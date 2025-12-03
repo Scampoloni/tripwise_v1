@@ -31,6 +31,13 @@
         aria-current={$page.url.pathname === '/' ? 'page' : undefined}
       >Dashboard</a>
 
+        <a
+        href="/tripsplit"
+        class="nav-link"
+        class:active={$page.url.pathname === '/tripsplit'}
+        aria-current={$page.url.pathname === '/tripsplit' ? 'page' : undefined}
+      >TripSplit</a>
+
       <a
         href="/converter"
         class="nav-link"
