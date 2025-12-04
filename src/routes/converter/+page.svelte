@@ -99,7 +99,7 @@
 </script>
 
 <section class="page-shell" data-animate="fadeUp">
-  <header class="page-header card-surface">
+  <header class="page-header card-surface header-centered">
     <div class="page-headings">
       <h1>Währungsrechner</h1>
       <p class="page-subtitle">Konvertiere Beträge schnell und präzise – mit Live-Kursen und ruhigem Design.</p>
@@ -233,28 +233,43 @@
 
 <style>
   .page-shell {
-    width: min(85vw, 1240px);
-    margin: 0 auto 2.8rem;
-    padding: 1.8rem 1.8rem 2.8rem;
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
+    width: min(85vw, 1240px);
+    margin: 0 auto 2.8rem;
+    padding: 1.8rem 1.8rem 2.8rem;
     box-sizing: border-box;
   }
 
   .page-header {
-    padding: 1.6rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.2rem;
     flex-wrap: wrap;
+    padding: 1.6rem 2rem;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .page-header.header-centered {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
   }
 
   .page-headings {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+  }
+
+  .header-centered .page-headings {
+    align-items: center;
+    text-align: center;
   }
 
   .page-headings h1 {

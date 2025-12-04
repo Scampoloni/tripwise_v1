@@ -121,48 +121,64 @@
   }
 </script>
 
-<section class="tripsplit">
-  <header class="ts-header">
-    <h1>TripSplit Gruppen</h1>
-    <div class="ts-new-group">
-      <input
-        placeholder="Neue Gruppe, z B WG Spanien"
-        bind:value={newGroupName}
-      />
-      <button on:click={handleCreateGroup}>Gruppe erstellen</button>
+<section class="page-shell" data-animate="fadeUp">
+  <header class="page-header card-surface header-centered">
+    <div class="page-headings">
+      <h1>TripSplit</h1>
+      <p class="page-subtitle">Gruppenausgaben planen, Splits berechnen</p>
     </div>
   </header>
 
-  <main class="ts-main">
-    <aside class="ts-sidebar">
-      <h2>Gruppen</h2>
+  <section class="page-body">
+    <div class="split-grid">
+      <aside class="card-surface split-sidebar">
+      <div class="split-sidebar-head">
+        <h2>Gruppen</h2>
+        <p class="muted">Lege eine neue Gruppe an oder wähle eine bestehende.</p>
+      </div>
+      <div class="split-new">
+        <input
+          class="input"
+          placeholder="Neue Gruppe, z. B. WG Spanien"
+          bind:value={newGroupName}
+        />
+        <button class="pill pill-cta" type="button" onclick={handleCreateGroup}>Gruppe erstellen</button>
+      </div>
       {#if groups.length === 0}
-        <p>Noch keine Gruppen, lege die erste an.</p>
+        <p class="muted">Noch keine Gruppen vorhanden.</p>
       {:else}
-        <ul>
+        <ul class="split-group-list">
           {#each groups as group}
-            <li
-              class:selected={selectedGroupId === group.id}
-              on:click={() => handleSelectGroup(group.id)}
-            >
-              <span>{group.name}</span>
+            <li>
+              <button
+                type="button"
+                class={`pill pill-ghost split-group-item ${selectedGroupId === group.id ? 'is-active' : ''}`}
+                onclick={() => handleSelectGroup(group.id)}
+              >
+                {group.name}
+              </button>
             </li>
           {/each}
         </ul>
       {/if}
     </aside>
 
-    <section class="ts-content">
+      <section class="card-surface split-content">
       {#if selectedGroup}
-        <h2>{selectedGroup.name}</h2>
+        <div class="split-content-head">
+          <div>
+            <h2>{selectedGroup.name}</h2>
+            <p class="muted">{selectedGroup.participants.length} {selectedGroup.participants.length === 1 ? 'Teilnehmer' : 'Teilnehmer:innen'}</p>
+          </div>
+        </div>
 
         <!-- Teilnehmer Bereich -->
         <h3>Teilnehmer</h3>
 
         {#if selectedGroup.participants.length === 0}
-          <p>Noch keine Teilnehmer.</p>
+          <p class="muted">Noch keine Teilnehmer hinzugefügt.</p>
         {:else}
-          <ul>
+          <ul class="split-list">
             {#each selectedGroup.participants as p}
               <li>
                 {p.name}
@@ -174,52 +190,58 @@
           </ul>
         {/if}
 
-        <div class="ts-add-participant">
+        <div class="split-form-grid">
           <input
+            class="input"
             placeholder="Name"
             bind:value={newParticipantName}
           />
           <input
-            placeholder="E Mail optional"
+            class="input"
+            placeholder="E-Mail optional"
             bind:value={newParticipantEmail}
           />
-          <button on:click={handleAddParticipant}>
-            Teilnehmer hinzufuegen
+          <button class="pill pill-secondary" type="button" onclick={handleAddParticipant}>
+            Teilnehmer hinzufügen
           </button>
         </div>
 
         <!-- Ausgaben Bereich -->
-        <h3 style="margin-top: 1.5rem;">Ausgaben</h3>
+        <h3>Ausgaben</h3>
 
         {#if selectedGroup.expenses.length === 0}
-          <p>Noch keine Ausgaben.</p>
+          <p class="muted">Noch keine Ausgaben erfasst.</p>
         {:else}
-          <table class="ts-expenses">
-            <thead>
-              <tr>
-                <th>Beschreibung</th>
-                <th>Betrag</th>
-                <th>Bezahlt von</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each selectedGroup.expenses as e}
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
                 <tr>
-                  <td>{e.description}</td>
-                  <td>{e.amount.toFixed(2)} {e.currency}</td>
-                  <td>{getParticipantName(selectedGroup, e.paidBy)}</td>
+                  <th>Beschreibung</th>
+                  <th>Betrag</th>
+                  <th>Bezahlt von</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each selectedGroup.expenses as e}
+                  <tr>
+                    <td>{e.description}</td>
+                    <td>{e.amount.toFixed(2)} {e.currency}</td>
+                    <td>{getParticipantName(selectedGroup, e.paidBy)}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
         {/if}
 
-        <div class="ts-add-expense">
+        <div class="split-form-grid">
           <input
-            placeholder="Beschreibung, z B Abendessen"
+            class="input"
+            placeholder="Beschreibung, z. B. Abendessen"
             bind:value={newExpenseDescription}
           />
           <input
+            class="input"
             type="number"
             min="0"
             step="0.05"
@@ -227,13 +249,13 @@
             bind:value={newExpenseAmount}
           />
 
-          <select bind:value={newExpenseCurrency}>
+          <select class="input" bind:value={newExpenseCurrency}>
             <option value="CHF">CHF</option>
             <option value="EUR">EUR</option>
             <option value="USD">USD</option>
           </select>
 
-          <select bind:value={newExpensePaidBy}>
+          <select class="input" bind:value={newExpensePaidBy}>
             <option value={null} disabled selected={newExpensePaidBy === null}>
               Bezahlt von ...
             </option>
@@ -242,52 +264,54 @@
             {/each}
           </select>
 
-          <button on:click={handleAddExpense}>
-            Ausgabe hinzufuegen
+          <button class="pill pill-cta" type="button" onclick={handleAddExpense}>
+            Ausgabe hinzufügen
           </button>
         </div>
 
         <!-- Balances -->
-        <h3 style="margin-top: 1.5rem;">Saldo pro Person</h3>
+        <h3>Saldo pro Person</h3>
         {#if selectedGroup.expenses.length === 0}
-          <p>Noch keine Salden, da es noch keine Ausgaben gibt.</p>
+          <p class="muted">Noch keine Salden, da bisher keine Ausgaben existieren.</p>
         {:else}
-          <table class="ts-balances">
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Saldo</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each balances as b}
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
                 <tr>
-                  <td>{getParticipantName(selectedGroup, b.participantId)}</td>
-                  <td>{b.net.toFixed(2)} {newExpenseCurrency}</td>
-                  <td>
-                    {#if b.net > 0.01}
-                      bekommt Geld
-                    {:else if b.net < -0.01}
-                      schuldet Geld
-                    {:else}
-                      ausgeglichen
-                    {/if}
-                  </td>
+                  <th>Person</th>
+                  <th>Saldo</th>
+                  <th>Status</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each balances as b}
+                  <tr>
+                    <td>{getParticipantName(selectedGroup, b.participantId)}</td>
+                    <td>{b.net.toFixed(2)} {newExpenseCurrency}</td>
+                    <td>
+                      {#if b.net > 0.01}
+                        bekommt Geld
+                      {:else if b.net < -0.01}
+                        schuldet Geld
+                      {:else}
+                        ausgeglichen
+                      {/if}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
         {/if}
 
         <!-- Settlements -->
-        <h3 style="margin-top: 1rem;">Ausgleichszahlungen</h3>
+        <h3>Ausgleichszahlungen</h3>
         {#if !selectedGroup.expenses.length}
-          <p>Keine Vorschlaege, da noch keine Ausgaben erfasst sind.</p>
+          <p class="muted">Keine Vorschläge, da noch keine Ausgaben erfasst sind.</p>
         {:else if settlements.length === 0}
-          <p>Alles ist bereits ausgeglichen.</p>
+          <p class="muted">Alles ist bereits ausgeglichen.</p>
         {:else}
-          <ul class="ts-settlements">
+          <ul class="split-settlements">
             {#each settlements as s}
               <li>
                 {getParticipantName(selectedGroup, s.fromParticipantId)}
@@ -300,113 +324,322 @@
           </ul>
         {/if}
       {:else}
-        <p>Waehle eine Gruppe aus der Liste, oder erstelle eine neue.</p>
+        <div class="empty-state">
+          <h3>Keine Gruppe ausgewählt</h3>
+          <p>Erstelle links eine neue Gruppe oder wähle eine bestehende aus der Liste.</p>
+        </div>
       {/if}
-    </section>
-  </main>
+      </section>
+    </div>
+  </section>
 </section>
 
 <style>
-  .tripsplit {
+  .page-shell {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1.5rem;
+    gap: 1.8rem;
+    width: min(85vw, 1240px);
+    margin: 0 auto 2.8rem;
+    padding: 1.8rem 1.8rem 2.6rem;
+    box-sizing: border-box;
   }
 
-  .ts-header {
+  .page-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    padding: 1.6rem 2rem;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    box-shadow: var(--shadow-soft);
   }
 
-  .ts-new-group {
+  .page-header.header-centered {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .page-headings {
     display: flex;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
-  .ts-main {
-    display: grid;
-    grid-template-columns: minmax(220px, 260px) 1fr;
-    gap: 1rem;
-    min-height: 400px;
+  .header-centered .page-headings {
+    align-items: center;
+    text-align: center;
   }
 
-  .ts-sidebar {
-    border-radius: 12px;
-    padding: 1rem;
-  }
-
-  .ts-sidebar ul {
-    list-style: none;
-    padding: 0;
+  .page-headings h1 {
     margin: 0;
+    font-size: clamp(2rem, 4vw, 2.4rem);
+    letter-spacing: -0.01em;
   }
 
-  .ts-sidebar li {
-    padding: 0.5rem 0.7rem;
-    border-radius: 8px;
+  .page-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.72rem 1.45rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    transition:
+      background 0.2s,
+      color 0.2s,
+      transform 0.15s,
+      box-shadow 0.2s,
+      border-color 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .pill-cta {
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border: 1px solid color-mix(in oklab, var(--primary) 45%, transparent);
+    box-shadow: 0 20px 38px color-mix(in oklab, var(--primary) 24%, transparent);
+  }
+
+  .pill-cta:hover {
+    transform: translateY(-1px);
+    background: var(--primary-hover);
+  }
+
+  .pill-secondary {
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
+    color: var(--text);
+    border-color: color-mix(in oklab, var(--border) 80%, transparent);
+    box-shadow: 0 14px 30px color-mix(in oklab, #0f172a 14%, transparent);
+  }
+
+  .pill-secondary:hover {
+    transform: translateY(-1px);
+  }
+
+  .pill-ghost {
+    background: transparent;
+    border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+    color: var(--primary);
+    box-shadow: none;
+  }
+
+  .pill-ghost:hover {
+    background: color-mix(in oklab, var(--primary-soft-bg) 55%, transparent);
+  }
+
+  :global([data-theme='dark']) .pill-secondary {
+    background: color-mix(in oklab, var(--surface) 70%, var(--primary-soft-bg) 30%);
+    border-color: color-mix(in oklab, var(--text) 18%, transparent);
+    color: var(--text);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+  }
+
+  :global([data-theme='dark']) .pill-ghost {
+    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+    color: color-mix(in oklab, var(--primary) 70%, var(--text));
+  }
+
+  :global([data-theme='dark']) .pill-ghost:hover {
+    background: color-mix(in oklab, var(--primary-soft-bg) 70%, transparent);
+  }
+
+  .page-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card-surface {
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    box-sizing: border-box;
+  }
+
+  .muted {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+  }
+
+  .input {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    background: color-mix(in oklab, var(--surface) 94%, var(--secondary) 6%);
+    color: var(--text);
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .input:hover {
+    border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 28%, transparent);
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
+  }
+
+  select.input {
+    appearance: none;
     cursor: pointer;
   }
 
-  .ts-sidebar li.selected {
-    font-weight: 600;
-    text-decoration: underline;
+  .page-body .card-surface {
+    padding: 1.6rem 1.8rem;
   }
 
-  .ts-content {
-    border-radius: 12px;
-    padding: 1.5rem;
+  .split-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 1.5rem;
+    width: 100%;
   }
 
-  .ts-add-participant {
-    margin-top: 0.75rem;
+  .split-sidebar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 1.2rem;
   }
 
-  .ts-expenses {
+  .split-sidebar-head h2 {
+    margin: 0;
+  }
+
+  .split-new {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .split-group-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .split-group-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.65rem 1rem;
+  }
+
+  .split-group-item.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-contrast);
+    box-shadow: 0 8px 18px color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+
+  .split-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .split-content-head h2 {
+    margin: 0;
+  }
+
+  .split-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.4rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .split-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
   }
 
-  .ts-expenses th,
-  .ts-expenses td {
-    padding: 0.4rem 0.6rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem 0.8rem;
     text-align: left;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    font-size: 0.95rem;
   }
 
-  .ts-add-expense {
-    margin-top: 0.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .split-settlements {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
   }
 
-  .ts-balances {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
+  .split-settlements li {
+    margin-bottom: 0.25rem;
   }
 
-  .ts-balances th,
-  .ts-balances td {
-    padding: 0.4rem 0.6rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    text-align: left;
+  .empty-state {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--text-secondary);
   }
 
-  .ts-settlements {
-    margin: 0.5rem 0 0.75rem;
-    padding-left: 1.2rem;
+  @media (max-width: 900px) {
+    .split-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .page-body .card-surface {
+      padding: 1.4rem;
+    }
+
+    .split-new {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .ts-settlements li {
-    margin-bottom: 0.2rem;
+  @media (max-width: 720px) {
+    .page-shell {
+      width: 100%;
+      padding: 1.4rem 1.2rem 2.4rem;
+    }
   }
 </style>
