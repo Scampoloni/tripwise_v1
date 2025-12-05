@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import Icon from '$lib/components/Icon.svelte';
 
   let mode = $state<'login' | 'register'>('login');
   let email = $state('');
@@ -45,214 +46,341 @@
 </script>
 
 <svelte:head>
-  <title>Login · TripWise</title>
+  <title>{mode === 'login' ? 'Anmelden' : 'Registrieren'} · TripWise</title>
 </svelte:head>
 
 <section class="auth-layout">
   <div class="card">
-    <h1>TripWise</h1>
-    <p class="subtitle">Melde dich an oder erstelle ein Konto, um deine Trips zu speichern.</p>
+    <!-- Logo & Header -->
+    <div class="card-header">
+      <div class="logo-icon">
+        <Icon name="plane" size={28} />
+      </div>
+      <h1>TripWise</h1>
+      <p class="subtitle">
+        {#if mode === 'login'}
+          Willkommen zurück! Melde dich an, um fortzufahren.
+        {:else}
+          Erstelle ein Konto, um deine Reisen zu planen.
+        {/if}
+      </p>
+    </div>
 
+    <!-- Tabs -->
     <div class="tabs">
       <button
         type="button"
-        class:selected={mode === 'login'}
-        on:click={() => switchMode('login')}
+        class:active={mode === 'login'}
+        onclick={() => switchMode('login')}
       >
-        Login
+        Anmelden
       </button>
       <button
         type="button"
-        class:selected={mode === 'register'}
-        on:click={() => switchMode('register')}
+        class:active={mode === 'register'}
+        onclick={() => switchMode('register')}
       >
         Registrieren
       </button>
     </div>
 
-    <form
-      class="form"
-      on:submit|preventDefault={handleSubmit}
-    >
-      <label>
-        Email
-        <input
-          class="field"
-          type="email"
-          bind:value={email}
-          autocomplete="email"
-          placeholder="you@example.com"
-        />
-      </label>
+    <!-- Form -->
+    <form class="form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+      <div class="field-group">
+        <label for="email" class="label">E-Mail</label>
+        <div class="input-wrapper">
+          <Icon name="mail" size={18} />
+          <input
+            id="email"
+            type="email"
+            bind:value={email}
+            autocomplete="email"
+            placeholder="name@beispiel.com"
+          />
+        </div>
+      </div>
 
-      <label>
-        Passwort
-        <input
-          class="field"
-          type="password"
-          bind:value={password}
-          autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
-          placeholder="••••••••"
-        />
-      </label>
+      <div class="field-group">
+        <label for="password" class="label">Passwort</label>
+        <div class="input-wrapper">
+          <Icon name="lock" size={18} />
+          <input
+            id="password"
+            type="password"
+            bind:value={password}
+            autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
+            placeholder="••••••••"
+          />
+        </div>
+      </div>
 
       {#if error}
-        <p class="error">{error}</p>
+        <div class="error-box">
+          <Icon name="alert-circle" size={16} />
+          <span>{error}</span>
+        </div>
       {/if}
 
       <button class="btn-primary" type="submit" disabled={loading}>
         {#if loading}
-          {mode === 'login' ? 'Wird eingeloggt …' : 'Wird erstellt …'}
+          <span class="spinner"></span>
+          {mode === 'login' ? 'Wird angemeldet…' : 'Wird erstellt…'}
         {:else}
-          {mode === 'login' ? 'Einloggen' : 'Konto erstellen'}
+          {mode === 'login' ? 'Anmelden' : 'Konto erstellen'}
         {/if}
       </button>
-
-      <!-- Optional spaeter: Gastmodus Button -->
-      <!--
-      <button type="button" class="btn-ghost full">
-        Als Gast fortfahren
-      </button>
-      -->
     </form>
+
+    <!-- Footer hint -->
+    <p class="footer-hint">
+      {#if mode === 'login'}
+        Noch kein Konto? <button type="button" class="link-btn" onclick={() => switchMode('register')}>Jetzt registrieren</button>
+      {:else}
+        Bereits registriert? <button type="button" class="link-btn" onclick={() => switchMode('login')}>Zur Anmeldung</button>
+      {/if}
+    </p>
   </div>
 </section>
 
 <style>
-  .auth-layout{
+  .auth-layout {
     min-height: 100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 1.5rem;
-    background:
-      radial-gradient(circle at top, rgba(59,130,246,0.18), transparent 55%),
-      radial-gradient(circle at bottom, rgba(56,189,248,0.13), transparent 55%),
-      var(--color-bg, #020617);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at top, color-mix(in oklab, var(--primary) 12%, transparent), transparent 60%),
+      radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--accent) 8%, transparent), transparent 50%);
   }
 
-  .card{
+  .card {
     width: 100%;
-    max-width: 420px;
-    background: var(--surface, #020617);
-    border-radius: 1.25rem;
-    border: 1px solid color-mix(in oklab, var(--border, #1f2937), transparent 10%);
-    box-shadow: 0 22px 60px rgba(0,0,0,0.55);
-    padding: 1.6rem 1.8rem 1.5rem;
+    max-width: 400px;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    padding: var(--space-xl);
   }
 
-  h1{
+  .card-header {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-soft-bg);
+    color: var(--primary);
+    margin-bottom: var(--space-md);
+  }
+
+  h1 {
     margin: 0;
-    font-size: 1.7rem;
-    letter-spacing: .03em;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
   }
 
-  .subtitle{
-    margin: .3rem 0 1.2rem;
-    color: var(--text-secondary, #9ca3af);
-    font-size: .95rem;
+  .subtitle {
+    margin: var(--space-xs) 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
-  .tabs{
-    display:flex;
-    padding:.18rem;
-    border-radius:999px;
-    background: color-mix(in oklab, var(--surface,#020617) 90%, #111827 10%);
-    border: 1px solid color-mix(in oklab, var(--border,#1f2937) 80%, transparent 20%);
-    margin-bottom: 1rem;
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: var(--space-xs);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    background: var(--secondary);
+    margin-bottom: var(--space-lg);
   }
 
-  .tabs button{
-    flex:1;
-    border:none;
+  .tabs button {
+    flex: 1;
+    border: none;
     background: transparent;
-    padding:.45rem .6rem;
-    border-radius: 999px;
+    padding: 0.6rem 1rem;
+    border-radius: calc(var(--radius-md) - 2px);
     font: inherit;
-    cursor:pointer;
-    color: var(--text-secondary,#9ca3af);
-    transition: background .18s, color .18s, transform .12s;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
   }
 
-  .tabs button.selected{
-    background: linear-gradient(90deg, #3b82f6, #2563eb);
-    color:#fff;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(37,99,235,.45);
+  .tabs button:hover:not(.active) {
+    color: var(--text);
   }
 
-  .form{
-    display:flex;
-    flex-direction:column;
-    gap:.7rem;
-    margin-top:.4rem;
+  .tabs button.active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
-  label{
-    display:flex;
-    flex-direction:column;
-    gap:.25rem;
-    font-size:.9rem;
-    font-weight:600;
+  /* Form */
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
   }
 
-  .field{
-    border-radius: .9rem;
-    border: 1.6px solid color-mix(in oklab, var(--border,#1f2937) 80%, var(--primary,#3b82f6) 8%);
-    padding:.65rem .75rem;
-    background: color-mix(in oklab, var(--surface,#020617) 92%, transparent 8%);
-    color: var(--text,#e5e7eb);
-    transition: border-color .18s, box-shadow .18s, background .18s;
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
   }
 
-  .field:focus{
-    outline:none;
-    border-color: var(--primary,#3b82f6);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary,#3b82f6), transparent 70%);
-    background: color-mix(in oklab, var(--surface,#020617) 96%, #020617 4%);
+  .label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
   }
 
-  .btn-primary{
-    margin-top:.5rem;
-    width:100%;
-    border:none;
-    border-radius:.9rem;
-    padding:.7rem 1rem;
-    cursor:pointer;
-    font-weight:700;
-    letter-spacing:.03em;
-    color:#fff;
-    background: linear-gradient(90deg, #3b82f6, #2563eb);
-    box-shadow: 0 10px 26px rgba(37,99,235,.45);
-    transition: transform .18s, box-shadow .18s, opacity .18s;
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
-  .btn-primary:disabled{
-    opacity:.7;
-    cursor:default;
-    transform:none;
-    box-shadow:none;
+  .input-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--focus-outer);
   }
 
-  .btn-primary:not(:disabled):hover{
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(37,99,235,.5);
+  .input-wrapper :global(svg) {
+    color: var(--text-secondary);
+    flex-shrink: 0;
   }
 
-  .btn-ghost.full{
-    margin-top:.3rem;
-    width:100%;
-    border-radius:.9rem;
-    padding:.65rem 1rem;
-    border:1px solid color-mix(in oklab, var(--border,#1f2937) 80%, transparent 20%);
+  .input-wrapper input {
+    flex: 1;
+    border: none;
     background: transparent;
-    color: var(--text-secondary,#9ca3af);
-    cursor:pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+    outline: none;
   }
 
-  .error{
-    margin: .2rem 0 0;
-    color: #fca5a5;
-    font-size:.9rem;
+  .input-wrapper input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+
+  /* Error */
+  .error-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    background: color-mix(in oklab, var(--danger) 10%, transparent);
+    border: 1px solid color-mix(in oklab, var(--danger) 30%, transparent);
+    color: var(--danger);
+    font-size: 0.875rem;
+  }
+
+  /* Primary Button */
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+    margin-top: var(--space-sm);
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: var(--primary-contrast);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 35%, transparent);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Footer */
+  .footer-hint {
+    margin-top: var(--space-lg);
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .link-btn {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .link-btn:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .card {
+      padding: var(--space-lg);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
   }
 </style>
