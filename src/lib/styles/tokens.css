@@ -1,0 +1,107 @@
+/* src/lib/styles/tokens.css */
+
+/* ===== LIGHT MODE (Default) ===== */
+:root,
+[data-theme="light"] {
+  /* ===== SURFACES ===== */
+  --tw-bg: #f2f2f7;              /* Main app background - Apple system gray 6 */
+  --tw-bg-card: #ffffff;         /* Cards, panels, elevated surfaces */
+  --tw-bg-subtle: #f7f7fa;       /* Subtle backgrounds, secondary elements */
+  --tw-bg-accent-soft: #e5f0ff;  /* Soft accent backgrounds */
+
+  /* ===== TEXT COLORS ===== */
+  --tw-text: #1c1c1e;            /* Primary text - Apple label */
+  --tw-text-secondary: #6e6e73;  /* Secondary text, labels */
+  --tw-text-muted: #8e8e93;      /* Muted text, placeholders */
+  --tw-text-on-accent: #ffffff;  /* Text on accent backgrounds */
+
+  /* ===== ACCENT COLORS ===== */
+  --tw-accent: #007aff;          /* Apple blue - primary actions */
+  --tw-accent-hover: #0062cc;    /* Hover state for accent */
+  --tw-accent-active: #0055b3;   /* Active/pressed state for accent */
+  --tw-accent-soft: rgba(0, 122, 255, 0.12);  /* Soft accent background */
+
+  /* ===== ACTIVE STATE (for list items, nav) ===== */
+  --tw-active-bg: rgba(0, 122, 255, 0.12);
+  --tw-active-border: rgba(0, 122, 255, 0.4);
+  --tw-active-text: #007aff;
+
+  /* ===== FEEDBACK COLORS ===== */
+  --tw-success: #34c759;         /* Apple green */
+  --tw-success-soft: rgba(52, 199, 89, 0.15);
+  --tw-warning: #ff9500;         /* Apple orange */
+  --tw-warning-soft: rgba(255, 149, 0, 0.15);
+  --tw-error: #ff3b30;           /* Apple red */
+  --tw-error-soft: rgba(255, 59, 48, 0.12);
+
+  /* ===== BORDERS AND DIVIDERS ===== */
+  --tw-border: #d2d2d7;          /* Standard borders */
+  --tw-border-subtle: #e5e5ea;   /* Subtle dividers */
+  --tw-border-strong: #c5c5c9;   /* Strong borders */
+
+  /* ===== BORDER RADII ===== */
+  --tw-radius-card: 16px;        /* Cards, panels */
+  --tw-radius-control: 12px;     /* Form controls */
+  --tw-radius-pill: 999px;       /* Pills, badges, tags */
+
+  /* ===== SHADOWS ===== */
+  --tw-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --tw-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --tw-shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.12), 0 16px 48px rgba(0, 0, 0, 0.08);
+
+  /* ===== SPACING SCALE ===== */
+  --tw-space-xs: 0.25rem;  /* 4px */
+  --tw-space-sm: 0.5rem;   /* 8px */
+  --tw-space-md: 1rem;     /* 16px */
+  --tw-space-lg: 1.5rem;   /* 24px */
+  --tw-space-xl: 2rem;     /* 32px */
+  --tw-space-2xl: 3rem;    /* 48px */
+
+  /* ===== TRANSITIONS ===== */
+  --tw-transition-fast: 150ms ease;
+  --tw-transition-normal: 250ms ease;
+}
+
+/* ===== DARK MODE ===== */
+[data-theme="dark"] {
+  /* ===== SURFACES ===== */
+  --tw-bg: #020617;              /* Very dark slate - calm navy */
+  --tw-bg-card: #0b1220;         /* Elevated surface - slightly lighter */
+  --tw-bg-subtle: #111827;       /* Subtle backgrounds */
+  --tw-bg-accent-soft: rgba(79, 141, 253, 0.18);
+
+  /* ===== TEXT COLORS ===== */
+  --tw-text: #e5e7eb;            /* Soft off-white - not pure white */
+  --tw-text-secondary: #9ca3af;  /* Secondary text */
+  --tw-text-muted: #6b7280;      /* Muted text */
+  --tw-text-on-accent: #ffffff;  /* Text on accent backgrounds */
+
+  /* ===== ACCENT COLORS ===== */
+  --tw-accent: #4f8dfd;          /* Calmer blue */
+  --tw-accent-hover: #6ba1ff;    /* Lighter on hover */
+  --tw-accent-active: #3b7de8;   /* Active state */
+  --tw-accent-soft: rgba(79, 141, 253, 0.22);
+
+  /* ===== ACTIVE STATE (for list items, nav) ===== */
+  --tw-active-bg: rgba(79, 141, 253, 0.15);
+  --tw-active-border: rgba(79, 141, 253, 0.4);
+  --tw-active-text: #e5e7eb;     /* Normal readable text, not accent */
+
+  /* ===== FEEDBACK COLORS ===== */
+  --tw-success: #34d399;         /* Softer green */
+  --tw-success-soft: rgba(52, 211, 153, 0.18);
+  --tw-warning: #fbbf24;         /* Softer amber */
+  --tw-warning-soft: rgba(251, 191, 36, 0.18);
+  --tw-error: #f87171;           /* Softer red */
+  --tw-error-soft: rgba(248, 113, 113, 0.15);
+
+  /* ===== BORDERS AND DIVIDERS ===== */
+  --tw-border: #1e293b;          /* Standard borders */
+  --tw-border-subtle: rgba(15, 23, 42, 0.9);  /* Subtle dividers */
+  --tw-border-strong: #334155;   /* Strong borders */
+
+  /* ===== SHADOWS ===== */
+  --tw-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --tw-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --tw-shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.6), 0 16px 48px rgba(0, 0, 0, 0.5);
+}

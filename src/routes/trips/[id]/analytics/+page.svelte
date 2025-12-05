@@ -85,7 +85,7 @@
   <section class="analytics">
     <div class="card">
       <h1>Trip nicht gefunden</h1>
-      <p>Bitte kehre zur Uebersicht zurueck.</p>
+      <p>Bitte kehre zur Übersicht zurueck.</p>
       <BackButton defaultHref="/" />
     </div>
   </section>
@@ -99,7 +99,7 @@
     <div class="grid">
       <!-- Zusammenfassungskarte -->
       <div class="card summary">
-        <h2>Uebersicht</h2>
+        <h2>Übersicht</h2>
         <div class="summary-grid">
           <div>
             <span class="label">Budget</span>
@@ -132,7 +132,7 @@
           </div>
         {:else}
           <p class="empty">
-            Fuer diesen Trip wurden noch keine Ausgaben erfasst.
+            Für diesen Trip wurden noch keine Ausgaben erfasst.
           </p>
         {/if}
       </div>

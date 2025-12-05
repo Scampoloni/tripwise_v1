@@ -1,117 +1,425 @@
 <script lang="ts">
   const faqs = [
-    { q: 'Wie lege ich eine neue Reise an?', a: 'Klicke auf „Neue Reise“. Erstelle Basis, Budget und Kategorien im 3-Schritt-Wizard.' },
-    { q: 'Wie füge ich Ausgaben hinzu?', a: 'In der Detailansicht: „Ausgabe hinzufügen“. Betrag, Kategorie, Datum, Notiz – speichern.' },
-    { q: 'Wie funktioniert der Theme-Schalter?', a: '„Auto“ folgt deiner System-Einstellung (prefers-color-scheme). Du kannst hell/dunkel manuell wählen.' },
-    { q: 'Wo werden meine Daten gespeichert?', a: 'Lokal im Browser (Local Storage). Im MVP gibt es keinen Login und kein Server-Sync.' },
-    { q: 'Kann ich Reisen teilen?', a: 'Ja, über einen Link-Export (read-only oder optional editierbar) – perfekt für Gruppen.' },
-    { q: 'Währungsrechner', a: 'Live-Kurse mit Fallback. Du kannst Beträge direkt in Ausgaben umrechnen.' }
+    { 
+      q: 'Wie lege ich eine neue Reise an?', 
+      a: 'Gehe auf „Trips" und klicke „Neue Reise". Gib Name, Reiseziel, Datum und Budget ein. Die Reise erscheint sofort auf deinem Dashboard.' 
+    },
+    { 
+      q: 'Wie füge ich Ausgaben hinzu?', 
+      a: 'Öffne eine Reise und wähle „Ausgabe hinzufügen". Trage Betrag, Kategorie und Datum ein. Die Ausgabe wird automatisch zum Budget-Tracker hinzugefügt.' 
+    },
+    { 
+      q: 'Was zeigt das Dashboard?', 
+      a: 'Das Dashboard gibt dir einen Überblick über alle aktiven Reisen, dein Gesamtbudget in CHF, anstehende Trips und den aktuellen Ausgabenstand.' 
+    },
+    { 
+      q: 'Wie funktioniert der Währungsrechner?', 
+      a: 'Der Converter nutzt Live-Wechselkurse. Gib einen Betrag ein, wähle Ausgangs- und Zielwährung – das Ergebnis wird sofort angezeigt.' 
+    },
+    { 
+      q: 'Was ist TripSplit?', 
+      a: 'Mit TripSplit kannst du Gruppenausgaben fair aufteilen. Erstelle eine Gruppe, füge Teilnehmer hinzu und erfasse gemeinsame Ausgaben. Die App berechnet automatisch, wer wem wie viel schuldet.' 
+    },
+    { 
+      q: 'Wo werden meine Daten gespeichert?', 
+      a: 'Alle Daten werden lokal in deinem Browser gespeichert (Local Storage). Es gibt keinen Server-Sync – deine Daten bleiben privat auf deinem Gerät.' 
+    },
+    { 
+      q: 'Kann ich zwischen Hell- und Dunkelmodus wechseln?', 
+      a: 'Ja, über das Theme-Icon in der Navigation. „Auto" folgt deiner System-Einstellung, oder du wählst manuell hell/dunkel.' 
+    },
+    { 
+      q: 'Wie lösche ich eine Reise?', 
+      a: 'Öffne die Reise und scrolle nach unten. Dort findest du den „Reise löschen"-Button. Achtung: Gelöschte Reisen können nicht wiederhergestellt werden.' 
+    }
   ];
+
   let query = $state('');
-   const filtered = $derived(
+  let showAllFaqs = $state(false);
+  
+  const filtered = $derived(
     faqs.filter(f =>
       (f.q + ' ' + f.a).toLowerCase().includes(query.toLowerCase())
     )
   );
+
+  const visibleFaqs = $derived(
+    showAllFaqs ? filtered : filtered.slice(0, 3)
+  );
+
+  const hasMoreFaqs = $derived(filtered.length > 3);
 </script>
 
-<section class="help-hero">
-  <div class="blob"></div>
-  <h1>Hilfe & Tipps</h1>
-  <p>Finde schnell Antworten und Best Practices für TripWise.</p>
-  <div class="search">
-    <input placeholder="Suche in FAQ …" bind:value={query} />
+<section class="page-shell" data-animate="fadeUp">
+  <header class="page-header card-surface header-centered">
+    <div class="page-headings">
+      <h1>Hilfe & Support</h1>
+      <p class="page-subtitle">Finde Antworten auf häufige Fragen und lerne TripWise besser kennen.</p>
+    </div>
+    <div class="search-wrap">
+      <input 
+        class="search-input" 
+        type="text" 
+        placeholder="FAQ durchsuchen …" 
+        bind:value={query} 
+      />
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="help-grid">
+      <!-- FAQ Section -->
+      <section class="card-surface faq-card">
+        <span class="card-label">Häufige Fragen</span>
+        <div class="faq-list">
+          {#each visibleFaqs as item}
+            <details class="faq-item">
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          {/each}
+          {#if filtered.length === 0}
+            <p class="no-results">Keine Treffer – probiere einen anderen Suchbegriff.</p>
+          {/if}
+        </div>
+        {#if hasMoreFaqs && !showAllFaqs}
+          <button class="show-more-btn" onclick={() => showAllFaqs = true}>
+            Weitere Fragen anzeigen ({filtered.length - 3})
+          </button>
+        {/if}
+        {#if showAllFaqs && hasMoreFaqs}
+          <button class="show-more-btn" onclick={() => showAllFaqs = false}>
+            Weniger anzeigen
+          </button>
+        {/if}
+      </section>
+
+      <!-- Quick Tips -->
+      <section class="card-surface tips-card">
+        <span class="card-label">Quick Tips</span>
+        <ul class="tips-list">
+          <li>
+            <span class="tip-icon">💡</span>
+            <span>Nutze den <a href="/converter">Währungsrechner</a> vor Reiseantritt, um ein Gefühl für lokale Preise zu bekommen.</span>
+          </li>
+          <li>
+            <span class="tip-icon">📊</span>
+            <span>Lege klare Kategorien an (Unterkunft, Essen, Transport) für bessere Budget-Übersicht.</span>
+          </li>
+          <li>
+            <span class="tip-icon">👥</span>
+            <span>Bei Gruppenreisen: Nutze <a href="/tripsplit">TripSplit</a> für faire Kostenaufteilung.</span>
+          </li>
+          <li>
+            <span class="tip-icon">🎯</span>
+            <span>Setze dein Budget realistisch – plane einen Puffer von 10-15% für Unvorhergesehenes ein.</span>
+          </li>
+          <li>
+            <span class="tip-icon">📱</span>
+            <span>TripWise funktioniert offline – erfasse Ausgaben auch ohne Internetverbindung.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Getting Started -->
+      <section class="card-surface start-card">
+        <span class="card-label">Erste Schritte</span>
+        <div class="steps-list">
+          <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">
+              <strong>Reise erstellen</strong>
+              <p>Starte mit einer neuen Reise – Name, Ziel, Daten und Budget festlegen.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content">
+              <strong>Ausgaben tracken</strong>
+              <p>Erfasse jeden Kauf direkt vor Ort. Je genauer, desto besser die Übersicht.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <div class="step-content">
+              <strong>Budget im Blick</strong>
+              <p>Das Dashboard zeigt dir jederzeit den aktuellen Stand – Budget vs. Ausgaben.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </div>
   </div>
 </section>
 
-<section class="help-grid">
-  <article class="panel">
-    <h2>FAQ</h2>
-    <div class="faq">
-      {#each filtered as item}
-        <details>
-          <summary>{item.q}</summary>
-          <p>{item.a}</p>
-        </details>
-      {/each}
-      {#if filtered.length === 0}
-        <p class="muted">Keine Treffer – probiere einen anderen Suchbegriff.</p>
-      {/if}
-    </div>
-  </article>
-
-  <article class="panel tips">
-    <h2>Tipps</h2>
-    <ul>
-      <li>Nutze den <a href="/converter">Währungsrechner</a> direkt beim Erfassen von Ausgaben.</li>
-      <li>Lege klare Kategorien an (Unterkunft, Essen, Transport) für bessere Insights.</li>
-      <li>Teste einmal komplett: Neue Reise → Ausgaben → Budget-Check.</li>
-      <li>Für Gruppen: Mitreisende früh eintragen, damit Split-Funktionen sauber rechnen.</li>
-    </ul>
-  </article>
-
-  <article class="panel support">
-    <h2>Feedback</h2>
-    <p>Vorschlag oder Bug gefunden? Notiere ihn in deiner Projektdoku unter „Validate“. Konkrete Learnings bringen dir in der Bewertung Extrapunkte.</p>
-    <div class="cta">
-      <a class="btn" href="/trips/new">Neue Reise starten</a>
-      <a class="btn ghost" href="/converter">Währungen umrechnen</a>
-    </div>
-  </article>
-</section>
-
 <style>
-  :root { scrollbar-gutter: stable both-edges; }
+  .page-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
 
-  .help-hero {
-    position: relative;
-    max-width: 980px; margin: 2rem auto 1.2rem; padding: 1.6rem 1rem 2rem; text-align: center;
+  .page-header {
+    margin-bottom: 1.75rem;
   }
-  .help-hero h1 { font-size: 2rem; margin: 0; }
-  .help-hero p { opacity: .85; margin: .3rem 0 1rem; }
-  .help-hero .search input {
-    width: min(560px, 100%); padding: .7rem .9rem; border-radius: 12px;
-    border: 1px solid var(--color-border); background: var(--color-bg);
+
+  .header-centered {
+    text-align: center;
   }
-  .help-hero .blob {
-    position: absolute; inset: -40px auto auto 50%; transform: translateX(-50%);
-    width: 520px; height: 220px; filter: blur(60px); z-index: -1; opacity: .5;
-    background: radial-gradient(60% 60% at 40% 40%, var(--color-accent, #60a5fa), transparent 70%),
-                radial-gradient(60% 60% at 60% 60%, #a78bfa, transparent 70%);
+
+  .page-headings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .page-headings h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 2.2rem);
+    letter-spacing: -0.01em;
+  }
+
+  .page-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  .search-wrap {
+    margin-top: 1.25rem;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 480px;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    background: var(--secondary);
+    color: var(--text);
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-secondary);
+  }
+
+  .page-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .help-grid {
-    max-width: 980px; margin: 0 auto 2rem; padding: 0 1rem;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
   }
-  @media (max-width: 920px) { .help-grid { grid-template-columns: 1fr; } }
 
-  .panel {
-    background: color-mix(in oklab, var(--color-bg) 85%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-border), transparent 35%);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px color-mix(in oklab, #000 18%, transparent);
-    backdrop-filter: blur(6px);
+  @media (max-width: 800px) {
+    .help-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card-surface {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  /* FAQ Card */
+  .faq-card {
+    grid-column: 1 / -1;
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    background: var(--secondary);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .faq-item summary {
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+  }
+
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item summary::after {
+    content: '+';
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+  }
+
+  .faq-item[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .faq-item summary:hover {
+    background: color-mix(in oklab, var(--secondary) 80%, var(--primary-soft-bg) 20%);
+  }
+
+  .faq-item p {
+    margin: 0;
+    padding: 0 1rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .no-results {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    text-align: center;
     padding: 1rem;
   }
-  .panel h2 { margin: 0 0 .6rem; font-size: 1.2rem; }
 
-  .faq details {
-    border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-bg);
-    margin: .5rem 0; padding: .4rem .6rem;
+  /* Tips Card */
+  .tips-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
-  .faq summary { cursor: pointer; font-weight: 600; }
-  .faq p { margin: .4rem 0 0; opacity: .95; }
-  .muted { opacity: .6; }
 
-  .tips ul { margin: 0; padding-left: 1.1rem; }
-  .tips li { margin: .35rem 0; }
-
-  .support .cta { display: flex; gap: .6rem; margin-top: .6rem; flex-wrap: wrap; }
-  .btn {
-    padding: .6rem .9rem; border-radius: 12px; border: 1px solid var(--color-border);
-    background: linear-gradient(180deg, color-mix(in oklab, var(--color-accent, #60a5fa), white 10%), var(--color-bg-secondary));
-    text-decoration: none; color: var(--color-text-primary);
+  .tips-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
   }
-  .btn.ghost { background: var(--color-bg); }
+
+  .tip-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .tips-list a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .tips-list a:hover {
+    text-decoration: underline;
+  }
+
+  /* Start Card */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .step-content {
+    flex: 1;
+  }
+
+  .step-content strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .step-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  /* Show More Button */
+  .show-more-btn {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    margin-top: 0.5rem;
+    border-radius: 0.9rem;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .show-more-btn:hover {
+    background: var(--secondary);
+    color: var(--text);
+    border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  }
+
+  @media (max-width: 600px) {
+    .page-shell {
+      padding: 1.5rem 1rem 2rem;
+    }
+
+    .card-surface {
+      padding: 1.25rem;
+    }
+  }
 </style>

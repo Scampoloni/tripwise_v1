@@ -1,6 +1,26 @@
 // @ts-check
 import { writable } from 'svelte/store';
 
+const STORAGE_KEY = 'tripwise_tripsplit_v1';
+
+/**
+ * Initialstate aus localStorage laden
+ * @returns {TripSplitGroup[]}
+ */
+function loadInitialGroups() {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch (err) {
+    console.error('TripSplit, Fehler beim Laden aus localStorage', err);
+    return [];
+  }
+}
+
 /** @typedef {import('$lib/types/tripSplit').TripSplitBalance} TripSplitBalance */
 /** @typedef {import('$lib/types/tripSplit').TripSplitSettlement} TripSplitSettlement */
 /** @typedef {import('$lib/types/tripSplit').TripSplitGroup} TripSplitGroup */
@@ -11,7 +31,17 @@ import { writable } from 'svelte/store';
 /** @typedef {import('$lib/types/tripSplit').TripSplitExpense} TripSplitExpense */
 
 /** @type {import('svelte/store').Writable<TripSplitGroup[]>} */
-export const tripSplitGroups = writable([]);
+export const tripSplitGroups = writable(loadInitialGroups());
+
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  tripSplitGroups.subscribe((groups) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+    } catch (err) {
+      console.error('TripSplit, Fehler beim Speichern in localStorage', err);
+    }
+  });
+}
 
 /**
  * Einfache Id Helfer
@@ -115,6 +145,171 @@ export function addExpense(groupId, input) {
   );
 
   return created;
+}
+
+/**
+ * Gruppenname aktualisieren
+ * @param {string} groupId
+ * @param {string} name
+ * @returns {TripSplitGroup | null}
+ */
+export function updateGroupName(groupId, name) {
+  /** @type {TripSplitGroup | null} */
+  let updated = null;
+
+  tripSplitGroups.update((groups) =>
+    groups.map((g) => {
+      if (g.id !== groupId) return g;
+      const next = {
+        ...g,
+        name,
+        updatedAt: new Date().toISOString()
+      };
+      updated = next;
+      return next;
+    })
+  );
+
+  return updated;
+}
+
+/**
+ * Gruppe entfernen
+ * @param {string} groupId
+ */
+export function deleteGroup(groupId) {
+  tripSplitGroups.update((groups) => groups.filter((g) => g.id !== groupId));
+}
+
+/**
+ * Teilnehmer aktualisieren
+ * @param {string} groupId
+ * @param {string} participantId
+ * @param {TripSplitNewParticipantInput} input
+ * @returns {TripSplitParticipant | null}
+ */
+export function updateParticipant(groupId, participantId, input) {
+  /** @type {TripSplitParticipant | null} */
+  let updatedParticipant = null;
+
+  tripSplitGroups.update((groups) =>
+    groups.map((g) => {
+      if (g.id !== groupId) return g;
+
+      let participantChanged = false;
+      const nextParticipants = g.participants.map((p) => {
+        if (p.id !== participantId) return p;
+        participantChanged = true;
+        const next = {
+          ...p,
+          name: input.name,
+          email: input.email
+        };
+        updatedParticipant = next;
+        return next;
+      });
+
+      if (!participantChanged) return g;
+
+      return {
+        ...g,
+        participants: nextParticipants,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+
+  return updatedParticipant;
+}
+
+/**
+ * Teilnehmer entfernen und Splits bereinigen
+ * @param {string} groupId
+ * @param {string} participantId
+ */
+export function deleteParticipant(groupId, participantId) {
+  tripSplitGroups.update((groups) =>
+    groups.map((g) => {
+      if (g.id !== groupId) return g;
+      const nextParticipants = g.participants.filter((p) => p.id !== participantId);
+
+      // Entferne Teilnehmer aus Splits, belasse paidBy wie gefordert
+      const nextExpenses = g.expenses.map((expense) => ({
+        ...expense,
+        splits: (expense.splits || []).filter((split) => split.participantId !== participantId)
+      }));
+
+      return {
+        ...g,
+        participants: nextParticipants,
+        expenses: nextExpenses,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+}
+
+/**
+ * Ausgabe aktualisieren
+ * @param {string} groupId
+ * @param {string} expenseId
+ * @param {Partial<TripSplitNewExpenseInput>} updates
+ * @returns {TripSplitExpense | null}
+ */
+export function updateExpense(groupId, expenseId, updates) {
+  /** @type {TripSplitExpense | null} */
+  let updatedExpense = null;
+
+  tripSplitGroups.update((groups) =>
+    groups.map((g) => {
+      if (g.id !== groupId) return g;
+
+      let expenseChanged = false;
+      const nextExpenses = g.expenses.map((expense) => {
+        if (expense.id !== expenseId) return expense;
+        expenseChanged = true;
+        const next = {
+          ...expense,
+          description: updates.description ?? expense.description,
+          amount: updates.amount ?? expense.amount,
+          currency: updates.currency ?? expense.currency,
+          paidBy: updates.paidBy ?? expense.paidBy,
+          splits: updates.splits ?? expense.splits,
+          splitMode: updates.splitMode ?? expense.splitMode
+        };
+        updatedExpense = next;
+        return next;
+      });
+
+      if (!expenseChanged) return g;
+
+      return {
+        ...g,
+        expenses: nextExpenses,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+
+  return updatedExpense;
+}
+
+/**
+ * Ausgabe entfernen
+ * @param {string} groupId
+ * @param {string} expenseId
+ */
+export function deleteExpense(groupId, expenseId) {
+  tripSplitGroups.update((groups) =>
+    groups.map((g) => {
+      if (g.id !== groupId) return g;
+      return {
+        ...g,
+        expenses: g.expenses.filter((expense) => expense.id !== expenseId),
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
 }
 
 /**

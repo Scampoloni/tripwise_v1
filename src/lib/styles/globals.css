@@ -1,4 +1,5 @@
 /* Wenn du Tailwind nutzt und deine Direktiven in src/app.css liegen: */
+@import '$lib/styles/tokens.css';
 
 
 /* -------- Global Base / Reset -------- */
