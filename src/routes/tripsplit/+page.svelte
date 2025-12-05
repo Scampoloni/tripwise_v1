@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import {
     tripSplitGroups,
+    tripSplitLoading,
+    loadTripSplitGroups,
     createGroup,
     addParticipant,
     addExpense,
@@ -18,8 +21,14 @@
   } from '$lib/types/tripSplit';
   import Icon from '$lib/components/Icon.svelte';
 
+  // Gruppen beim Mount laden
+  onMount(() => {
+    loadTripSplitGroups();
+  });
+
   // Runes: $tripSplitGroups wird automatisch aus dem Store erzeugt
   const groups = $derived<TripSplitGroup[]>($tripSplitGroups ?? []);
+  const isLoading = $derived($tripSplitLoading);
 
   // Phase 4, Gruppen State
   let newGroupName = $state('');
@@ -99,20 +108,22 @@
     newExpenseDescription.trim().length > 0 && expenseAmountValue > 0 && Boolean(newExpensePaidBy)
   );
 
-  function handleCreateGroup() {
+  async function handleCreateGroup() {
     const name = newGroupName.trim();
     if (!name) return;
 
-    const group = createGroup({ name });
+    const group = await createGroup({ name });
     newGroupName = '';
-    selectedGroupId = group.id;
+    if (group) {
+      selectedGroupId = group.id;
+    }
   }
 
   function handleSelectGroup(id: string) {
     selectedGroupId = id;
   }
 
-  function handleAddParticipant() {
+  async function handleAddParticipant() {
     if (!selectedGroup) return;
 
     const name = newParticipantName.trim();
@@ -120,7 +131,7 @@
 
     if (!name) return;
 
-    addParticipant(selectedGroup.id, {
+    await addParticipant(selectedGroup.id, {
       name,
       email: email || undefined
     });
@@ -129,7 +140,7 @@
     newParticipantEmail = '';
   }
 
-  function handleAddExpense() {
+  async function handleAddExpense() {
     if (!selectedGroup) return;
     if (selectedGroup.participants.length === 0) return;
 
@@ -151,7 +162,7 @@
       share: rawShare
     }));
 
-    addExpense(selectedGroup.id, {
+    await addExpense(selectedGroup.id, {
       description,
       amount: amountNum,
       currency: newExpenseCurrency,
@@ -171,21 +182,21 @@
     return p ? p.name : 'Unbekannt';
   }
 
-  function handleDeleteGroup(groupId: string) {
-    deleteGroup(groupId);
+  async function handleDeleteGroup(groupId: string) {
+    await deleteGroup(groupId);
     if (selectedGroupId === groupId) {
       selectedGroupId = null;
     }
   }
 
-  function handleDeleteParticipant(participantId: string) {
+  async function handleDeleteParticipant(participantId: string) {
     if (!selectedGroup) return;
-    deleteParticipant(selectedGroup.id, participantId);
+    await deleteParticipant(selectedGroup.id, participantId);
   }
 
-  function handleDeleteExpense(expenseId: string) {
+  async function handleDeleteExpense(expenseId: string) {
     if (!selectedGroup) return;
-    deleteExpense(selectedGroup.id, expenseId);
+    await deleteExpense(selectedGroup.id, expenseId);
   }
 </script>
 
@@ -198,6 +209,11 @@
     </div>
   </header>
 
+  {#if isLoading}
+    <div class="loading-state">
+      <p>Gruppen werden geladen...</p>
+    </div>
+  {:else}
   <div class="page-body">
     <!-- Gruppen-Navigation Card -->
     <section class="card-surface">
@@ -388,7 +404,7 @@
       </div>
 
       <!-- Balance Layout: Saldo + Ausgleichszahlungen -->
-      <div class="balance-layout">
+      <div class="two-column-grid">
         <!-- Saldo Card -->
         <section class="card-surface">
           <span class="card-label">Saldo pro Person</span>
@@ -455,6 +471,7 @@
       </section>
     {/if}
   </div>
+  {/if}
 </section>
 
 <style>
@@ -467,6 +484,12 @@
     margin: 0 auto 2.8rem;
     padding: 1.8rem 1.8rem 2.8rem;
     box-sizing: border-box;
+  }
+
+  .loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
   }
 
   .page-body {
@@ -807,18 +830,6 @@
     background: color-mix(in oklab, var(--primary-soft-bg) 30%, var(--secondary));
     color: var(--primary);
     border-color: var(--primary);
-  }
-
-  /* ===== BALANCE LAYOUT ===== */
-  .balance-layout {
-    display: grid;
-    gap: 1.5rem;
-  }
-
-  @media (min-width: 900px) {
-    .balance-layout {
-      grid-template-columns: 1.2fr 1fr;
-    }
   }
 
   /* ===== BALANCE INFO ===== */

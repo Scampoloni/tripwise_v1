@@ -1,6 +1,7 @@
 <script>
   import { theme, themeAuto, toggleTheme } from '$lib/stores/theme.js';
   import { resetTrips } from '$lib/stores/trips.js';
+  import { resetTripSplit } from '$lib/stores/tripSplit.js';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import Icon from '$lib/components/Icon.svelte';
@@ -12,6 +13,7 @@
       console.error(e);
     } finally {
       resetTrips();
+      resetTripSplit();
       goto('/login');
     }
   }

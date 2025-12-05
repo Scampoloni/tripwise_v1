@@ -429,3 +429,119 @@ export async function deleteExpenseForTrip(tripId, expenseId) {
   });
   return result.deletedCount === 1;
 }
+
+
+/* ---------- TRIPSPLIT GROUPS ---------- */
+
+async function tripSplitGroupsCollection() {
+  const db = await getDb();
+  return db.collection('tw_tripsplit_groups');
+}
+
+/**
+ * Map TripSplit Group aus DB zu API Format
+ */
+function mapTripSplitGroup(doc) {
+  if (!doc) return null;
+  return {
+    id: doc._id.toString(),
+    userId: doc.userId ? doc.userId.toString() : null,
+    name: doc.name || '',
+    participants: Array.isArray(doc.participants) ? doc.participants : [],
+    expenses: Array.isArray(doc.expenses) ? doc.expenses : [],
+    createdAt: doc.createdAt || '',
+    updatedAt: doc.updatedAt || ''
+  };
+}
+
+/**
+ * Alle TripSplit Gruppen eines Users holen
+ */
+export async function getTripSplitGroups(userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return [];
+  const docs = await col
+    .find({ userId: new ObjectId(userId) })
+    .sort({ createdAt: -1 })
+    .toArray();
+  return docs.map(mapTripSplitGroup);
+}
+
+/**
+ * Einzelne TripSplit Gruppe holen (mit User-Check)
+ */
+export async function getTripSplitGroupById(id, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return null;
+  const doc = await col.findOne({
+    _id: new ObjectId(id),
+    userId: new ObjectId(userId)
+  });
+  return mapTripSplitGroup(doc);
+}
+
+/**
+ * Neue TripSplit Gruppe erstellen
+ */
+export async function createTripSplitGroup(data, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return null;
+  
+  const now = new Date().toISOString();
+  const insertDoc = {
+    userId: new ObjectId(userId),
+    name: data.name || '',
+    participants: Array.isArray(data.participants) ? data.participants : [],
+    expenses: Array.isArray(data.expenses) ? data.expenses : [],
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const result = await col.insertOne(insertDoc);
+  return mapTripSplitGroup({ _id: result.insertedId, ...insertDoc });
+}
+
+/**
+ * TripSplit Gruppe updaten (vollstaendig ersetzen)
+ */
+export async function updateTripSplitGroup(id, data, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return null;
+
+  const now = new Date().toISOString();
+  const setDoc = {
+    name: data.name || '',
+    participants: Array.isArray(data.participants) ? data.participants : [],
+    expenses: Array.isArray(data.expenses) ? data.expenses : [],
+    updatedAt: now
+  };
+
+  const result = await col.updateOne(
+    {
+      _id: new ObjectId(id),
+      userId: new ObjectId(userId)
+    },
+    { $set: setDoc }
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  return getTripSplitGroupById(id, userId);
+}
+
+/**
+ * TripSplit Gruppe loeschen
+ */
+export async function deleteTripSplitGroup(id, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return false;
+
+  const result = await col.deleteOne({
+    _id: new ObjectId(id),
+    userId: new ObjectId(userId)
+  });
+
+  return result.deletedCount === 1;
+}

@@ -172,6 +172,7 @@
 
     return {
       count: active.length,
+      activeTrips: active,
       totalBudgetChf,
       totalSpentChf,
       percent,
@@ -236,10 +237,14 @@
             </div>
             {#if liveOverview.count > 0}
               <h2 class="overview-title">
-                {liveOverview.count} {liveOverview.count === 1 ? 'aktiver Trip' : 'aktive Trips'}
+                {#if liveOverview.count === 1}
+                  {liveOverview.activeTrips[0]?.name || 'Trip'}
+                {:else}
+                  {liveOverview.activeTrips.map(t => t.name).join(', ')}
+                {/if}
               </h2>
               <p class="overview-subtitle">
-                {formatCurrency(liveOverview.totalSpentChf, BASE_CURRENCY)} von {formatCurrency(liveOverview.totalBudgetChf, BASE_CURRENCY)} genutzt
+                {liveOverview.count === 1 ? 'Aktiver Trip' : `${liveOverview.count} aktive Trips`}
               </p>
             {:else}
               <h2 class="overview-title">Keine laufenden Reisen</h2>

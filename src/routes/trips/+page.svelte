@@ -35,9 +35,6 @@
 
   const today = startOfDay(new Date());
 
-  let confirmOpen = $state(false);
-  let tripToDelete = $state(null);
-
   const filteredTrips = $derived.by(() => {
     const list = Array.isArray(allTrips) ? allTrips : [];
     const byStatus = list.filter(trip => matchesStatus(trip, filterStatus, today));
@@ -57,21 +54,9 @@
 
   const hasMoreTrips = $derived(filteredTrips.length > 5);
 
-  function askDelete(trip) {
-    tripToDelete = trip;
-    confirmOpen = true;
-  }
-
-  async function confirmDelete() {
-    if (!tripToDelete) return;
-    await deleteTrip(tripToDelete.id);
-    confirmOpen = false;
-    tripToDelete = null;
-  }
-
-  function cancelDelete() {
-    confirmOpen = false;
-    tripToDelete = null;
+  async function handleDelete(trip) {
+    if (!trip) return;
+    await deleteTrip(trip.id);
   }
 
   function destinationLabel(trip) {
@@ -188,16 +173,6 @@
     </div>
   </header>
 
-  <ConfirmDialog
-    open={confirmOpen}
-    title="Trip loeschen?"
-    message={tripToDelete ? `Willst du "${tripToDelete.name}" wirklich loeschen?` : ''}
-    confirmLabel="Ja, loeschen"
-    cancelLabel="Abbrechen"
-    onConfirm={confirmDelete}
-    onCancel={cancelDelete}
-  />
-
   {#if allTrips.length === 0}
     <section class="empty-card card-surface">
       <span class="empty-icon"><Icon name="plane" size={48} strokeWidth={1.5} /></span>
@@ -281,7 +256,7 @@
           {#each visibleTrips as trip (trip.id)}
             <TripCard
               {trip}
-              on:delete={(event) => askDelete(event.detail)}
+              on:delete={(event) => handleDelete(event.detail)}
             />
           {/each}
         </div>
