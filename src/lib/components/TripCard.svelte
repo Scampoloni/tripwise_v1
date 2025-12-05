@@ -6,6 +6,7 @@
   import { browser } from '$app/environment';
   import { createEventDispatcher } from 'svelte';
   import { goto } from '$app/navigation';
+  import Icon from '$lib/components/Icon.svelte';
 
   // Trip kommt von aussen, kein Runes-$props
   export let trip;
@@ -107,12 +108,12 @@
     aria-label="Trip loeschen"
     on:click|stopPropagation={handleDeleteClick}
   >
-    ✕
+    <Icon name="trash" size={14} />
   </button>
 
   <div class="trip-inner">
     <div class="trip-avatar">
-      <span>{initials}</span>
+      <Icon name="map-pin" size={22} />
     </div>
 
     <div class="trip-main">
@@ -197,16 +198,14 @@
   }
 
   .trip-avatar {
-    flex: 0 0 48px;
-    height: 48px;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--primary-soft-bg) 70%, var(--surface) 30%);
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
     color: var(--primary);
-    font-size: 0.95rem;
   }
 
   .trip-main {

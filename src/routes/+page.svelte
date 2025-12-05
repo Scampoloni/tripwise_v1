@@ -6,6 +6,7 @@
   import LiveBudgetModal from '$lib/components/LiveBudgetModal.svelte';
   import { calculateSpent } from '$lib/utils/calculations.js';
   import { convertWithCachedRates, loadRatesIfNeeded } from '$lib/utils/currency.js';
+  import Icon from '$lib/components/Icon.svelte';
 
   const allTrips = $derived($trips ?? []);
   const BASE_CURRENCY = 'CHF';
@@ -206,22 +207,20 @@
 <section class="page-shell" data-animate="fadeUp">
   <header class="page-header card-surface">
     <div class="page-headings">
-      <h1>Your Trips</h1>
+      <h1>Dashboard</h1>
       <p class="page-subtitle">Heute im Überblick</p>
     </div>
 
     <div class="actions">
-      <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
-        New Trip
-      </button>
+     
       <button class="pill pill-secondary" type="button" onclick={() => goto('/trips')}>
-        Trip List
+        <Icon name="plane" size={16} /> Trips
       </button>
       <button class="pill pill-secondary" type="button" onclick={() => goto('/trips/analytics')}>
-        Analytics
+        <Icon name="bar-chart" size={16} /> Analytics
       </button>
       <button class="pill pill-secondary" type="button" onclick={() => goto('/globe')}>
-        Globe
+        <Icon name="globe" size={16} /> Globe
       </button>
     </div>
   </header>
@@ -231,7 +230,10 @@
       <article class="overview-card card-surface">
         <div class="overview-top">
           <div>
-            <span class="card-label">Live overview</span>
+            <div class="card-label-with-icon">
+              <Icon name="trending-up" size={16} />
+              <span class="card-label">Live Overview</span>
+            </div>
             {#if liveOverview.count > 0}
               <h2 class="overview-title">
                 {liveOverview.count} {liveOverview.count === 1 ? 'aktiver Trip' : 'aktive Trips'}
@@ -273,10 +275,11 @@
 
       <aside class="next-trip-card card-surface">
         <div class="card-label-row">
-          <span class="card-label">Next trip</span>
-          {#if nextTrip}
-            <span class="trip-flag" aria-hidden="true">{nextTrip.flag}</span>
-          {/if}
+          <div class="card-label-with-icon">
+            <Icon name="calendar" size={16} />
+            <span class="card-label">Nächster Trip</span>
+          </div>
+          <span class="trip-icon"><Icon name="map-pin" size={20} /></span>
         </div>
 
         {#if nextTrip}
@@ -297,7 +300,7 @@
             <h3>Kein nächster Trip geplant</h3>
             <p>Erstelle einen Trip, um hier eine Vorschau zu sehen.</p>
             <button class="pill pill-ghost" type="button" onclick={() => goto('/trips/new')}>
-              New Trip
+              <Icon name="plus" size={16} /> Neuer Trip
             </button>
           </div>
         {/if}
@@ -306,7 +309,10 @@
 
     <div class="secondary-row">
       <article class="totals-card card-surface">
-        <span class="card-label">Reiseausgaben 2025</span>
+        <div class="card-label-with-icon">
+          <Icon name="wallet" size={16} />
+          <span class="card-label">Reiseausgaben 2025</span>
+        </div>
         <h3 class="totals-value">{formatCurrency(spent2025.totalSpent, BASE_CURRENCY)}</h3>
         <p class="totals-subtitle">
           über {spent2025.count === 1 ? '1 Trip' : `${spent2025.count} Trips`} mit Start 2025
@@ -535,10 +541,22 @@
 
   .card-label {
     display: inline-block;
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--text) 62%, var(--text-secondary) 38%);
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon .card-label {
+    color: inherit;
   }
 
   .status-badge {
@@ -631,8 +649,15 @@
     gap: 0.75rem;
   }
 
-  .trip-flag {
-    font-size: 1.5rem;
+  .trip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+    color: var(--primary);
   }
 
   .next-trip-card {

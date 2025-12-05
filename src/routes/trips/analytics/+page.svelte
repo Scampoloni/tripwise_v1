@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { trips } from '$lib/stores/trips.js';
   import { convertWithCachedRates, loadRatesIfNeeded } from '$lib/utils/currency.js';
+  import Icon from '$lib/components/Icon.svelte';
 
   const allTrips = $derived($trips ?? []);
   const BASE_CURRENCY = 'CHF';
@@ -141,6 +142,7 @@
     </div>
     <div class="actions actions--center">
       <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>
+        <Icon name="home" size={16} />
         Zurück zum Dashboard
       </button>
     </div>
@@ -149,11 +151,17 @@
   <section class="analytics card-surface">
     <div class="grid">
       <div class="card">
-        <h2>Ausgaben nach Kategorie</h2>
+        <span class="card-label-with-icon">
+          <Icon name="target" size={16} />
+          <span class="card-label">Ausgaben nach Kategorie</span>
+        </span>
         <canvas bind:this={pieCanvas} height="280"></canvas>
       </div>
       <div class="card tall">
-        <h2>Ausgaben pro Trip</h2>
+        <span class="card-label-with-icon">
+          <Icon name="bar-chart" size={16} />
+          <span class="card-label">Ausgaben pro Trip</span>
+        </span>
         <div class="chart-wrap">
           <canvas bind:this={barCanvas}></canvas>
         </div>
@@ -273,9 +281,32 @@
     height: 360px;
   }
 
-  h2 {
-    margin: 0.25rem 0 0.5rem;
-    font-size: 1.1rem;
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+  }
+
+  .page-title-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--primary-soft-bg, #e0e7ff) 50%, var(--surface) 50%);
+    color: var(--primary);
+    margin-bottom: 0.5rem;
   }
 
   @media (max-width: 720px) {

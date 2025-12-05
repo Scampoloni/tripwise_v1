@@ -4,6 +4,7 @@
   import { calculateSpent } from '$lib/utils/calculations.js';
   import { page } from '$app/stores';
   import BackButton from "$lib/components/BackButton.svelte";
+  import Icon from '$lib/components/Icon.svelte';
 
   // Route-Param + Trip aus dem Store holen (Runes)
   const tripId = $derived($page.params.id);
@@ -83,7 +84,10 @@
 
 {#if !trip}
   <section class="analytics">
-    <div class="card">
+    <div class="card empty-card">
+      <div class="empty-icon">
+        <Icon name="bar-chart" size={32} />
+      </div>
       <h1>Trip nicht gefunden</h1>
       <p>Bitte kehre zur Übersicht zurueck.</p>
       <BackButton defaultHref="/" />
@@ -99,7 +103,10 @@
     <div class="grid">
       <!-- Zusammenfassungskarte -->
       <div class="card summary">
-        <h2>Übersicht</h2>
+        <span class="card-label-with-icon">
+          <Icon name="wallet" size={16} />
+          <span class="card-label">Übersicht</span>
+        </span>
         <div class="summary-grid">
           <div>
             <span class="label">Budget</span>
@@ -124,16 +131,24 @@
 
       <!-- Balkendiagramm Ausgaben nach Kategorie -->
       <div class="card tall">
-        <h2>Ausgaben nach Kategorie</h2>
+        <span class="card-label-with-icon">
+          <Icon name="bar-chart" size={16} />
+          <span class="card-label">Ausgaben nach Kategorie</span>
+        </span>
 
         {#if hasExpenses}
           <div class="chart-wrap">
             <canvas bind:this={barCanvas}></canvas>
           </div>
         {:else}
-          <p class="empty">
-            Für diesen Trip wurden noch keine Ausgaben erfasst.
-          </p>
+          <div class="empty-state">
+            <div class="empty-icon small">
+              <Icon name="receipt" size={24} />
+            </div>
+            <p class="empty">
+              Für diesen Trip wurden noch keine Ausgaben erfasst.
+            </p>
+          </div>
         {/if}
       </div>
     </div>
@@ -170,11 +185,6 @@
     border:1px solid var(--border);
     border-radius:1rem;
     padding:1rem;
-  }
-
-  h2{
-    margin:.25rem 0 .5rem;
-    font-size:1.1rem;
   }
 
   .tall .chart-wrap{
@@ -214,8 +224,66 @@
   }
 
   .empty{
-    margin: .5rem 0 0;
+    margin: 0;
     color: var(--text-secondary);
     font-size:.9rem;
+  }
+
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .empty-card h1 {
+    margin: 0;
+  }
+
+  .empty-card p {
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--primary-soft-bg, #e0e7ff) 50%, var(--surface) 50%);
+    color: var(--primary);
+  }
+
+  .empty-icon.small {
+    width: 56px;
+    height: 56px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
   }
 </style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+
   const faqs = [
     { 
       q: 'Wie lege ich eine neue Reise an?', 
@@ -99,23 +101,23 @@
         <span class="card-label">Quick Tips</span>
         <ul class="tips-list">
           <li>
-            <span class="tip-icon">💡</span>
+            <span class="tip-icon"><Icon name="lightbulb" size={18} /></span>
             <span>Nutze den <a href="/converter">Währungsrechner</a> vor Reiseantritt, um ein Gefühl für lokale Preise zu bekommen.</span>
           </li>
           <li>
-            <span class="tip-icon">📊</span>
+            <span class="tip-icon"><Icon name="bar-chart" size={18} /></span>
             <span>Lege klare Kategorien an (Unterkunft, Essen, Transport) für bessere Budget-Übersicht.</span>
           </li>
           <li>
-            <span class="tip-icon">👥</span>
+            <span class="tip-icon"><Icon name="users" size={18} /></span>
             <span>Bei Gruppenreisen: Nutze <a href="/tripsplit">TripSplit</a> für faire Kostenaufteilung.</span>
           </li>
           <li>
-            <span class="tip-icon">🎯</span>
+            <span class="tip-icon"><Icon name="target" size={18} /></span>
             <span>Setze dein Budget realistisch – plane einen Puffer von 10-15% für Unvorhergesehenes ein.</span>
           </li>
           <li>
-            <span class="tip-icon">📱</span>
+            <span class="tip-icon"><Icon name="smartphone" size={18} /></span>
             <span>TripWise funktioniert offline – erfasse Ausgaben auch ohne Internetverbindung.</span>
           </li>
         </ul>
@@ -155,13 +157,17 @@
 
 <style>
   .page-shell {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    width: min(85vw, 1240px);
+    margin: 0 auto 2.8rem;
+    padding: 1.8rem 1.8rem 2.8rem;
+    box-sizing: border-box;
   }
 
   .page-header {
-    margin-bottom: 1.75rem;
+    margin-bottom: 0;
   }
 
   .header-centered {
@@ -334,8 +340,12 @@
   }
 
   .tip-icon {
-    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    color: var(--primary);
+    margin-top: 0.1rem;
   }
 
   .tips-list a {
@@ -413,11 +423,18 @@
     border-color: color-mix(in oklab, var(--primary) 50%, transparent);
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 720px) {
     .page-shell {
-      padding: 1.5rem 1rem 2rem;
+      width: 100%;
+      padding: 1.4rem 1.2rem 2.2rem;
     }
 
+    .card-surface {
+      padding: 1.4rem;
+    }
+  }
+
+  @media (max-width: 600px) {
     .card-surface {
       padding: 1.25rem;
     }

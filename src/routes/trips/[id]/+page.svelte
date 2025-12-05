@@ -11,6 +11,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import BackButton from '$lib/components/BackButton.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import type { StoreTrip, StoreExpense, Participant } from '$lib/types/trips';
 
   type SplitRow = {
@@ -481,9 +482,15 @@
 {#if !trip}
   <section class="page-shell page-empty" data-animate="fadeUp">
     <div class="empty-card card-surface">
+      <div class="empty-icon">
+        <Icon name="map-pin" size={48} />
+      </div>
       <h1>Trip nicht gefunden</h1>
       <p>Bitte kehre zur Übersicht zurück.</p>
-      <a href="/trips" class="pill pill-cta">Zur Übersicht</a>
+      <a href="/trips" class="pill pill-cta">
+        <Icon name="home" size={16} />
+        Zur Übersicht
+      </a>
     </div>
   </section>
 {:else}
@@ -501,13 +508,16 @@
 
       <div class="actions">
         <button type="button" class="pill pill-secondary" onclick={() => to('/trips')}>
+          <Icon name="home" size={16} />
           Zur Trip Übersicht
         </button>
         <button type="button" class="pill pill-secondary" onclick={() => to(`/trips/${trip.id}/analytics`)}>
+          <Icon name="bar-chart" size={16} />
           Analytics
         </button>
         <button type="button" class="pill pill-cta" onclick={openAddModal}>
-          + Ausgabe erfassen
+          <Icon name="plus" size={16} />
+          Ausgabe erfassen
         </button>
       </div>
     </header>
@@ -515,7 +525,10 @@
     <div class="trip-detail-layout">
       <section class="trip-panel trip-panel--overview card-surface">
         <div class="summary-head">
-          <h2>Reiseüberblick</h2>
+          <span class="card-label-with-icon">
+            <Icon name="globe" size={16} />
+            <span class="card-label">Reiseüberblick</span>
+          </span>
           {#if displayStatus}
             <span class="summary-badge" data-status={derivedTripStatus ?? undefined}>
               <span class="badge-dot"></span>
@@ -546,7 +559,10 @@
         <div class="overview-expenses card-subsection expenses-card">
           <div class="expenses-head">
             <div>
-              <h3>Ausgaben</h3>
+              <span class="card-label-with-icon">
+                <Icon name="receipt" size={16} />
+                <span class="card-label">Ausgaben</span>
+              </span>
               <p class="section-subtitle">
                 {hasExpenses
                   ? 'Alle erfassten Ausgaben im Überblick.'
@@ -557,9 +573,15 @@
 
           {#if !hasExpenses}
             <div class="empty-state">
+              <div class="empty-icon small">
+                <Icon name="receipt" size={28} />
+              </div>
               <h3>Noch keine Ausgaben</h3>
               <p>Erstelle deine erste Ausgabe, um deinen Reiseverlauf zu starten.</p>
-              <button class="pill" type="button" onclick={openAddModal}>+ Ausgabe erfassen</button>
+              <button class="pill pill-cta" type="button" onclick={openAddModal}>
+                <Icon name="plus" size={16} />
+                Ausgabe erfassen
+              </button>
             </div>
           {:else}
             <ul class="expense-list">
@@ -578,8 +600,9 @@
                       type="button"
                       title="Ausgabe löschen"
                       onclick={() => handleDeleteExpense(expense.id)}
+                      aria-label="Ausgabe löschen"
                     >
-                      x
+                      <Icon name="trash" size={14} />
                     </button>
                   </div>
                 </li>
@@ -588,12 +611,12 @@
             {#if expenseCount > 3}
               <button
                 type="button"
-                class="pill pill-secondary expenses-toggle"
+                class="show-more-btn"
                 onclick={() => (showAllOverviewExpenses = !showAllOverviewExpenses)}
               >
                 {showAllOverviewExpenses
                   ? 'Weniger anzeigen'
-                  : `Weitere anzeigen (${expenseCount - 3})`}
+                  : `Weitere Ausgaben anzeigen (${expenseCount - 3})`}
               </button>
             {/if}
           {/if}
@@ -602,9 +625,10 @@
 
       <section class="trip-panel trip-panel--budget card-surface">
         <div class="budget-head">
-          <div class="budget-head-left">
-            <h2>Budget Status</h2>
-          </div>
+          <span class="card-label-with-icon">
+            <Icon name="wallet" size={16} />
+            <span class="card-label">Budget Status</span>
+          </span>
           <span class={`badge ${budgetStatus.className}`}>{budgetStatus.label}</span>
         </div>
 
@@ -673,7 +697,10 @@
         {#if showLegacyBudgetExtras}
           <div class="recent-expenses card-surface subtle">
             <div class="recent-head">
-              <h3>Letzte Ausgaben</h3>
+              <span class="card-label-with-icon">
+                <Icon name="receipt" size={16} />
+                <span class="card-label">Letzte Ausgaben</span>
+              </span>
               {#if hasExpenses}
                 <span class="recent-count">{expenseCount} gesamt</span>
               {/if}
@@ -698,7 +725,10 @@
               </ul>
               <section class="trip-split card-surface">
                 <div class="split-head">
-                  <h2>Kostenaufteilung</h2>
+                  <span class="card-label-with-icon">
+                    <Icon name="users" size={16} />
+                    <span class="card-label">Kostenaufteilung</span>
+                  </span>
                   <p class="split-subtitle">Wer hat wie viel bezahlt und welcher Anteil wäre fair?</p>
                 </div>
 
@@ -753,7 +783,10 @@
       <section class="trip-group card-surface">
         <div class="group-head">
           <div>
-            <h2>Reisegruppe</h2>
+            <span class="card-label-with-icon">
+              <Icon name="users" size={16} />
+              <span class="card-label">Reisegruppe</span>
+            </span>
             <p class="group-subtitle">Teile die Reise mit den richtigen Personen.</p>
           </div>
         </div>
@@ -762,7 +795,7 @@
           {#each participants as participant (participant.id)}
             <div class="participant-pill">
               <span class="participant-avatar" aria-hidden="true">
-                {participant.name.slice(0, 1).toUpperCase()}
+                <Icon name="user" size={16} />
               </span>
               <span class="participant-name">{participant.name}</span>
             </div>
@@ -784,6 +817,7 @@
               onclick={handleAddParticipant}
               disabled={!canAddParticipant || isSavingParticipant}
             >
+              <Icon name="plus" size={16} />
               {isSavingParticipant ? 'Wird hinzugefügt …' : 'Person hinzufügen'}
             </button>
           </div>
@@ -808,7 +842,9 @@
     <div class="modal-card card-surface" role="dialog" aria-modal="true" aria-label="Ausgabe hinzufügen">
       <header class="modal-header">
         <h3>Neue Ausgabe</h3>
-        <button class="modal-close" type="button" onclick={() => (addOpen = false)}>x</button>
+        <button class="modal-close" type="button" onclick={() => (addOpen = false)} aria-label="Schließen">
+          <Icon name="x" size={18} />
+        </button>
       </header>
 
       <div class="modal-body">
@@ -853,13 +889,17 @@
       </div>
 
       <footer class="modal-actions">
-        <button class="pill" type="button" onclick={() => (addOpen = false)}>Abbrechen</button>
+        <button class="pill" type="button" onclick={() => (addOpen = false)}>
+          <Icon name="x" size={16} />
+          Abbrechen
+        </button>
         <button
           class="pill pill-cta"
           type="button"
           disabled={!canSaveExpense || savingExpense}
           onclick={handleAddExpense}
         >
+          <Icon name="check" size={16} />
           {savingExpense ? 'Wird gespeichert ...' : 'Speichern'}
         </button>
       </footer>
@@ -962,14 +1002,6 @@
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-  }
-
-  .summary-head h2,
-  .budget-head h2,
-  .expenses-head h3,
-  .split-head h2 {
-    margin: 0;
-    font-size: 1.35rem;
   }
 
   .split-head {
@@ -1287,11 +1319,6 @@
     gap: 0.6rem;
   }
 
-  .recent-head h3 {
-    margin: 0;
-    font-size: 1.1rem;
-  }
-
   .recent-count {
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -1416,8 +1443,24 @@
     justify-content: flex-end;
   }
 
-  .expenses-toggle {
-    align-self: flex-start;
+  .show-more-btn {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    margin-top: 0.25rem;
+    border-radius: 0.9rem;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .show-more-btn:hover {
+    background: var(--secondary);
+    color: var(--text);
+    border-color: color-mix(in oklab, var(--primary) 50%, transparent);
   }
 
   .section-subtitle {
@@ -1759,5 +1802,37 @@
       flex-direction: column;
       align-items: stretch;
     }
+  }
+
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--primary-soft-bg) 50%, var(--surface) 50%);
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-icon.small {
+    width: 56px;
+    height: 56px;
   }
 </style>

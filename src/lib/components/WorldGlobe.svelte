@@ -2,8 +2,7 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
 
-  export let trips = [];
-  export let height = 320;
+  let { trips = [], height = 320 } = $props();
 
   const STATUS_COLORS = {
     planned: '#3b82f6',
@@ -207,9 +206,12 @@
     };
   });
 
-  $: if (ready) {
-    updatePoints();
-  }
+  // Svelte 5: Reaktiv auf trips-Änderungen reagieren
+  $effect(() => {
+    if (ready && trips) {
+      updatePoints();
+    }
+  });
 </script>
 
 <div class="world-globe" style={`height:${normalizedHeight()}px`}>

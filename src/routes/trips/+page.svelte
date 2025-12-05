@@ -4,6 +4,7 @@
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
+  import Icon from '$lib/components/Icon.svelte';
 
   const allTrips = $derived($trips ?? []);
 
@@ -30,6 +31,7 @@
 
   let filterStatus = $state('all'); // all | active | upcoming | past
   let searchTerm = $state('');
+  let showAllTrips = $state(false);
 
   const today = startOfDay(new Date());
 
@@ -45,8 +47,15 @@
       ? byStatus.filter(trip => matchesSearch(trip, term))
       : byStatus;
 
-    return [...bySearch].sort((a, b) => sortTrips(a, b, filterStatus));
+    // Sort: Active first, then upcoming (by start date asc), then past (by end date desc)
+    return [...bySearch].sort((a, b) => smartSortTrips(a, b, today));
   });
+
+  const visibleTrips = $derived(
+    showAllTrips ? filteredTrips : filteredTrips.slice(0, 5)
+  );
+
+  const hasMoreTrips = $derived(filteredTrips.length > 5);
 
   function askDelete(trip) {
     tripToDelete = trip;
@@ -90,6 +99,38 @@
     const ascTimeA = toTime(parseDate(a?.startDate), Infinity);
     const ascTimeB = toTime(parseDate(b?.startDate), Infinity);
     return ascTimeA - ascTimeB;
+  }
+
+  function smartSortTrips(a, b, referenceDate) {
+    const aActive = isActiveTrip(a, referenceDate);
+    const bActive = isActiveTrip(b, referenceDate);
+    const aFuture = isFutureTrip(a, referenceDate);
+    const bFuture = isFutureTrip(b, referenceDate);
+    const aPast = isPastTrip(a, referenceDate);
+    const bPast = isPastTrip(b, referenceDate);
+
+    // Priority: Active (0) > Upcoming (1) > Past (2)
+    const getPriority = (active, future, past) => {
+      if (active) return 0;
+      if (future) return 1;
+      if (past) return 2;
+      return 3;
+    };
+
+    const priorityA = getPriority(aActive, aFuture, aPast);
+    const priorityB = getPriority(bActive, bFuture, bPast);
+
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // Within same priority group, sort by date
+    if (aPast && bPast) {
+      // Past trips: most recent first (by end date desc)
+      return toTime(parseDate(b?.endDate), -Infinity) - toTime(parseDate(a?.endDate), -Infinity);
+    }
+    // Active and upcoming: earliest first (by start date asc)
+    return toTime(parseDate(a?.startDate), Infinity) - toTime(parseDate(b?.startDate), Infinity);
   }
 
   function parseDate(value) {
@@ -138,11 +179,11 @@
       <p class="page-subtitle">Alle Reisen im Überblick</p>
     </div>
     <div class="actions actions--center">
-      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>
-        Zurück zum Dashboard
-      </button>
       <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
-        New Trip
+        <Icon name="plus" size={16} /> Neuer Trip
+      </button>
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>
+        <Icon name="home" size={16} /> Dashboard
       </button>
     </div>
   </header>
@@ -159,17 +200,21 @@
 
   {#if allTrips.length === 0}
     <section class="empty-card card-surface">
+      <span class="empty-icon"><Icon name="plane" size={48} strokeWidth={1.5} /></span>
       <h2>Starte deine erste Reise</h2>
       <p>Budget setzen, Ausgaben erfassen, Live-Insights erhalten</p>
       <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
-        Create Trip
+        <Icon name="plus" size={16} /> Trip erstellen
       </button>
     </section>
   {:else}
     <section class="trip-list card-surface">
       <div class="trip-list-header">
-        <h2>Reisen</h2>
-        <p>{filteredTrips.length} {filteredTrips.length === 1 ? 'Trip' : 'Trips'}</p>
+        <div class="card-label-with-icon">
+          <Icon name="plane" size={16} />
+          <span class="card-label">Reisen</span>
+        </div>
+        <span class="trip-count">{filteredTrips.length} {filteredTrips.length === 1 ? 'Trip' : 'Trips'}</span>
       </div>
 
       <div class="triplist-controls">
@@ -209,7 +254,7 @@
         </div>
 
         <label class="search" aria-label="Suche nach Trips">
-          <span class="sr-only"></span>
+          <Icon name="search" size={16} />
           <input
             type="search"
             placeholder="Nach Trip oder Ort suchen"
@@ -228,18 +273,28 @@
               searchTerm = '';
             }}
           >
-            Filter zurücksetzen
+            <Icon name="x" size={16} /> Filter zurücksetzen
           </button>
         </div>
       {:else}
         <div class="trip-list-items">
-          {#each filteredTrips as trip (trip.id)}
+          {#each visibleTrips as trip (trip.id)}
             <TripCard
               {trip}
               on:delete={(event) => askDelete(event.detail)}
             />
           {/each}
         </div>
+        {#if hasMoreTrips && !showAllTrips}
+          <button class="show-more-btn" onclick={() => showAllTrips = true}>
+            Weitere Trips anzeigen ({filteredTrips.length - 5})
+          </button>
+        {/if}
+        {#if showAllTrips && hasMoreTrips}
+          <button class="show-more-btn" onclick={() => showAllTrips = false}>
+            Weniger anzeigen
+          </button>
+        {/if}
       {/if}
     </section>
   {/if}
@@ -399,10 +454,12 @@
     min-width: 220px;
     display: flex;
     align-items: center;
+    gap: 0.6rem;
     border-radius: 999px;
     padding: 0.25rem 0.9rem;
     background: color-mix(in oklab, var(--surface) 94%, transparent);
     border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    color: var(--text-secondary);
   }
 
   .search input {
@@ -425,17 +482,31 @@
   .trip-list-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     gap: 0.75rem;
   }
 
-  .trip-list-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
+  .card-label {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
   }
 
-  .trip-list-header p {
-    margin: 0;
+  .card-label-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon .card-label {
+    color: inherit;
+  }
+
+  .trip-count {
     color: var(--text-secondary);
     font-size: 0.95rem;
   }
@@ -444,6 +515,26 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .show-more-btn {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    margin-top: 0.25rem;
+    border-radius: 0.9rem;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .show-more-btn:hover {
+    background: var(--secondary);
+    color: var(--text);
+    border-color: color-mix(in oklab, var(--primary) 50%, transparent);
   }
 
   .trip-list-empty {
@@ -469,6 +560,15 @@
     background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
     border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
     box-shadow: var(--shadow-soft);
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
   }
 
   .empty-card h2 {

@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import BackButton from '$lib/components/BackButton.svelte';
   import PlaceSearchInput from '$lib/components/PlaceSearchInput.svelte';
+  import Icon from '$lib/components/Icon.svelte';
 
   // Wizard
   let step = $state(1);
@@ -92,7 +93,12 @@
 <section class="page-shell" data-animate="fadeUp">
   <header class="page-header card-surface">
     <div class="page-headings">
-      <h1>New Trip</h1>
+      <div class="page-title-row">
+        <div class="page-title-icon">
+          <Icon name="plane" size={22} />
+        </div>
+        <h1>New Trip</h1>
+      </div>
       <p class="page-subtitle">Lege eine neue Reise mit Budget, Zeitraum und Notiz an.</p>
     </div>
     <BackButton label="Zurück" defaultHref="/trips" />
@@ -119,7 +125,10 @@
 
       {#if step === 1}
         <section class="form-section">
-          <h2>Basisdaten</h2>
+          <span class="card-label-with-icon">
+            <Icon name="map-pin" size={16} />
+            <span class="card-label">Basisdaten</span>
+          </span>
 
           <div class="field">
             <label for="trip-name">Reisetitel</label>
@@ -157,15 +166,22 @@
           </div>
 
           <div class="form-actions">
-            <button class="btn ghost" type="button" disabled>Zurück</button>
+            <button class="btn ghost" type="button" disabled>
+              <Icon name="arrow-left" size={16} />
+              Zurück
+            </button>
             <button class="btn primary" type="button" onclick={next} disabled={!validStep1}>
               Weiter
+              <Icon name="arrow-right" size={16} />
             </button>
           </div>
         </section>
       {:else if step === 2}
         <section class="form-section">
-          <h2>Budget & Notizen</h2>
+          <span class="card-label-with-icon">
+            <Icon name="wallet" size={16} />
+            <span class="card-label">Budget & Notizen</span>
+          </span>
 
           <div class="field">
             <label for="trip-budget">Gesamtbudget</label>
@@ -205,15 +221,22 @@
           </div>
 
           <div class="form-actions">
-            <button class="btn ghost" type="button" onclick={back}>Zurück</button>
+            <button class="btn ghost" type="button" onclick={back}>
+              <Icon name="arrow-left" size={16} />
+              Zurück
+            </button>
             <button class="btn primary" type="button" onclick={next} disabled={!validStep2}>
               Weiter
+              <Icon name="arrow-right" size={16} />
             </button>
           </div>
         </section>
       {:else}
         <section class="form-section">
-          <h2>Übersicht</h2>
+          <span class="card-label-with-icon">
+            <Icon name="check" size={16} />
+            <span class="card-label">Übersicht</span>
+          </span>
 
           <div class="summary">
             <div><span>Titel</span><strong>{name}</strong></div>
@@ -226,8 +249,12 @@
           {#if error}<p class="field-hint warn">{error}</p>{/if}
 
           <div class="form-actions">
-            <button class="btn ghost" type="button" onclick={back}>Zurück</button>
+            <button class="btn ghost" type="button" onclick={back}>
+              <Icon name="arrow-left" size={16} />
+              Zurück
+            </button>
             <button class="btn primary" type="button" onclick={saveTrip} disabled={saving}>
+              <Icon name="plus" size={16} />
               {saving ? 'Wird erstellt …' : 'Reise erstellen'}
             </button>
           </div>
@@ -237,7 +264,10 @@
 
     <aside class="preview-card card-surface">
       <header class="preview-header">
-        <h3>Live-Vorschau</h3>
+        <span class="card-label-with-icon">
+          <Icon name="smartphone" size={16} />
+          <span class="card-label">Live-Vorschau</span>
+        </span>
         <p>Deine Angaben aktualisieren sich in Echtzeit.</p>
       </header>
 
@@ -252,7 +282,10 @@
       </div>
 
       <div class="preview-tips">
-        <p>Tipps:</p>
+        <span class="card-label-with-icon">
+          <Icon name="lightbulb" size={14} />
+          <span class="card-label">Tipps</span>
+        </span>
         <ul>
           <li>Klare Kategorien helfen später bei Analytics.</li>
           <li>Währungen kannst du jederzeit anpassen.</li>
@@ -267,10 +300,15 @@
 {#if savedId}
   <div class="success">
     <div class="card success-card">
-      <div class="check">✓</div>
+      <div class="check">
+        <Icon name="check" size={28} />
+      </div>
       <h3>Reise erstellt</h3>
       <p>Wir leiten dich weiter …</p>
-      <a class="btn primary" href={"/trips/" + savedId}>Falls keine Weiterleitung: Hier öffnen</a>
+      <a class="btn primary" href={"/trips/" + savedId}>
+        <Icon name="arrow-right" size={16} />
+        Falls keine Weiterleitung: Hier öffnen
+      </a>
     </div>
   </div>
 {/if}
@@ -389,13 +427,6 @@
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
-  }
-
-  .form-section h2 {
-    margin: 0;
-    font-size: 1.35rem;
-    font-weight: 600;
-    color: var(--text);
   }
 
   .field {
@@ -574,11 +605,6 @@
     color: var(--text);
   }
 
-  .preview-header h3 {
-    margin: 0;
-    font-size: 1.15rem;
-  }
-
   .preview-header p {
     margin: 0.3rem 0 0;
     color: var(--text-secondary);
@@ -617,12 +643,6 @@
     margin-top: 0.35rem;
     font-style: italic;
     color: var(--text);
-  }
-
-  .preview-tips p {
-    margin: 0;
-    font-weight: 600;
-    color: var(--text-secondary);
   }
 
   .preview-tips ul {
@@ -753,5 +773,44 @@
     .btn {
       width: 100%;
     }
+  }
+
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .card-label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+  }
+
+  .page-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .page-title-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--primary-soft-bg) 50%, var(--surface) 50%);
+    color: var(--primary);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
   }
 </style>

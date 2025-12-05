@@ -4,6 +4,7 @@
   import { trips } from '$lib/stores/trips.js';
   import { getTripsWithCoordinates } from '$lib/utils/tripsView.js';
   import { getWorldTravelStats } from '$lib/utils/worldStats.js';
+  import Icon from '$lib/components/Icon.svelte';
 
   const allTrips = $derived($trips ?? []);
   const globeTrips = $derived(getTripsWithCoordinates(allTrips));
@@ -21,13 +22,19 @@
       <p class="page-subtitle">Alle Trips mit Koordinaten auf einen Blick</p>
     </div>
     <div class="actions actions--center">
-      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>Zurück zum Dashboard</button>
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/')}>
+        <Icon name="home" size={16} />
+        Zurück zum Dashboard
+      </button>
     </div>
   </header>
 
   <article class="stats-card card-surface">
     <div>
-      <span class="card-label">Visited countries</span>
+      <span class="card-label-with-icon">
+        <Icon name="map-pin" size={16} />
+        <span class="card-label">Visited countries</span>
+      </span>
       <h2 class="stats-value">{worldStats.visitedCount} / {worldStats.totalCountries}</h2>
       <p class="stats-subtitle">Du hast {worldStats.visitedPercent}% aller Länder gesehen.</p>
     </div>
@@ -45,7 +52,10 @@
 
   <section class="globe-panel card-surface">
     <div class="globe-header">
-      <span class="card-label">World map</span>
+      <span class="card-label-with-icon">
+        <Icon name="globe" size={16} />
+        <span class="card-label">World map</span>
+      </span>
       <h2>Trips mit Koordinaten</h2>
       <p>Visualisiert geplante, aktive und abgeschlossene Ziele</p>
     </div>
@@ -190,6 +200,25 @@
     background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
     color: var(--text);
     border-color: color-mix(in oklab, var(--border) 80%, transparent);
+  }
+
+  .card-label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+  }
+
+  .page-title-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--primary-soft-bg, #e0e7ff) 50%, var(--surface) 50%);
+    color: var(--primary);
+    margin-bottom: 0.5rem;
   }
 
   @media (max-width: 720px) {

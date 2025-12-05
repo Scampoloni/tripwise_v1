@@ -19,9 +19,7 @@
     TripSplitBalance,
     TripSplitSettlement
   } from '$lib/types/tripSplit';
-  import Button from '$lib/ui/Button.svelte';
-  import Input from '$lib/ui/Input.svelte';
-  import ListRow from '$lib/ui/ListRow.svelte';
+  import Icon from '$lib/components/Icon.svelte';
 
   // Runes: $tripSplitGroups wird automatisch aus dem Store erzeugt
   const groups = $derived<TripSplitGroup[]>($tripSplitGroups ?? []);
@@ -312,41 +310,34 @@
       {#if groups.length === 0}
         <p class="empty-hint">Noch keine Gruppen vorhanden.</p>
       {:else}
-        <div class="nav-list">
+        <div class="item-list">
           {#each groups as group}
-            <ListRow 
-              divider={true} 
-              clickable={true} 
-              active={selectedGroupId === group.id}
-            >
+            <div class="list-item" class:active={selectedGroupId === group.id}>
               <button
-                slot="content"
                 type="button"
-                class="nav-item-btn"
+                class="item-main"
                 onclick={() => handleSelectGroup(group.id)}
               >
-                {group.name}
+                <span class="item-icon"><Icon name="users" size={18} /></span>
+                <span class="item-label">{group.name}</span>
               </button>
-              <span slot="actions">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onclick={(event: MouseEvent) => {
-                    event.stopPropagation();
-                    if (editingGroupId === group.id) {
-                      cancelGroupRename();
-                    } else if (confirmingDeleteGroupId === group.id) {
-                      cancelDeleteGroup();
-                    } else {
-                      startGroupRename(group);
-                    }
-                  }}
-                >
-                  ⋯
-                </Button>
-              </span>
-            </ListRow>
+              <button
+                type="button"
+                class="item-action"
+                onclick={(event) => {
+                  event.stopPropagation();
+                  if (editingGroupId === group.id) {
+                    cancelGroupRename();
+                  } else if (confirmingDeleteGroupId === group.id) {
+                    cancelDeleteGroup();
+                  } else {
+                    startGroupRename(group);
+                  }
+                }}
+              >
+                ⋯
+              </button>
+            </div>
           {/each}
         </div>
       {/if}
@@ -357,7 +348,8 @@
         {#if editingGroup}
           <div class="action-form">
             <p class="form-label">Gruppe umbenennen: <strong>{editingGroup.name}</strong></p>
-            <Input
+            <input
+              class="text-input"
               placeholder="Neuer Name"
               bind:value={editingGroupName}
             />
@@ -396,12 +388,13 @@
 
       <!-- New Group Form -->
       <div class="new-group-form">
-        <Input
+        <input
+          class="text-input"
           placeholder="Neue Gruppe, z. B. WG Spanien"
           bind:value={newGroupName}
         />
         <button class="pill pill-cta" type="button" onclick={handleCreateGroup} disabled={!canCreateGroup}>
-          Neue Gruppe
+          + Gruppe erstellen
         </button>
       </div>
     </section>
@@ -423,15 +416,17 @@
         {#if selectedGroup.participants.length === 0}
           <p class="empty-hint">Noch keine Teilnehmer hinzugefügt.</p>
         {:else}
-          <div class="list-container">
+          <div class="item-list">
             {#each selectedGroup.participants as p}
               {#if editingParticipantId === p.id}
                 <div class="inline-form">
-                  <Input
+                  <input
+                    class="text-input"
                     placeholder="Name"
                     bind:value={editingParticipantName}
                   />
-                  <Input
+                  <input
+                    class="text-input"
                     placeholder="E-Mail (optional)"
                     bind:value={editingParticipantEmail}
                   />
@@ -448,46 +443,48 @@
                   </div>
                 </div>
               {:else}
-                <ListRow>
-                  <div slot="content" class="participant-info">
-                    <span class="participant-name">{p.name}</span>
-                    {#if p.email}
-                      <span class="participant-email">{p.email}</span>
-                    {/if}
+                <div class="list-item">
+                  <div class="item-main-info">
+                    <span class="item-icon"><Icon name="user" size={18} /></span>
+                    <div class="item-details">
+                      <span class="item-label">{p.name}</span>
+                      {#if p.email}
+                        <span class="item-sublabel">{p.email}</span>
+                      {/if}
+                    </div>
                   </div>
-                  <span slot="actions">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      onclick={() => {
-                        if (editingParticipantId === p.id) {
-                          cancelParticipantEdit();
-                        } else {
-                          startParticipantEdit(p);
-                        }
-                      }}
-                    >
-                      ⋯
-                    </Button>
-                  </span>
-                </ListRow>
+                  <button
+                    type="button"
+                    class="item-action"
+                    onclick={() => {
+                      if (editingParticipantId === p.id) {
+                        cancelParticipantEdit();
+                      } else {
+                        startParticipantEdit(p);
+                      }
+                    }}
+                  >
+                    ⋯
+                  </button>
+                </div>
               {/if}
             {/each}
           </div>
         {/if}
 
         <div class="form-row">
-          <Input
+          <input
+            class="text-input"
             placeholder="Name"
             bind:value={newParticipantName}
           />
-          <Input
+          <input
+            class="text-input"
             placeholder="E-Mail (optional)"
             bind:value={newParticipantEmail}
           />
           <button class="pill pill-cta" type="button" onclick={handleAddParticipant} disabled={!canAddParticipant}>
-            Hinzufügen
+            + Hinzufügen
           </button>
         </div>
       </section>
@@ -499,16 +496,18 @@
         {#if selectedGroup.expenses.length === 0}
           <p class="empty-hint">Noch keine Ausgaben erfasst.</p>
         {:else}
-          <div class="list-container">
+          <div class="item-list">
             {#each selectedGroup.expenses as e}
               {#if editingExpenseId === e.id}
                 <div class="inline-form">
-                  <Input
+                  <input
+                    class="text-input"
                     placeholder="Beschreibung"
                     bind:value={editingExpenseDescription}
                   />
                   <div class="amount-edit">
-                    <Input
+                    <input
+                      class="text-input"
                       type="number"
                       bind:value={editingExpenseAmount}
                     />
@@ -527,39 +526,41 @@
                   </div>
                 </div>
               {:else}
-                <ListRow>
-                  <div slot="content" class="expense-info">
-                    <span class="expense-desc">{e.description}</span>
-                    <span class="expense-meta">{e.amount.toFixed(2)} {e.currency} • {getParticipantName(selectedGroup, e.paidBy)}</span>
+                <div class="list-item">
+                  <div class="item-main-info">
+                    <span class="item-icon"><Icon name="receipt" size={18} /></span>
+                    <div class="item-details">
+                      <span class="item-label">{e.description}</span>
+                      <span class="item-sublabel">{e.amount.toFixed(2)} {e.currency} • {getParticipantName(selectedGroup, e.paidBy)}</span>
+                    </div>
                   </div>
-                  <span slot="actions">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      onclick={() => {
-                        if (editingExpenseId === e.id) {
-                          cancelExpenseEdit();
-                        } else {
-                          startExpenseEdit(e);
-                        }
-                      }}
-                    >
-                      ⋯
-                    </Button>
-                  </span>
-                </ListRow>
+                  <button
+                    type="button"
+                    class="item-action"
+                    onclick={() => {
+                      if (editingExpenseId === e.id) {
+                        cancelExpenseEdit();
+                      } else {
+                        startExpenseEdit(e);
+                      }
+                    }}
+                  >
+                    ⋯
+                  </button>
+                </div>
               {/if}
             {/each}
           </div>
         {/if}
 
         <div class="form-row">
-          <Input
+          <input
+            class="text-input"
             placeholder="Beschreibung, z. B. Abendessen"
             bind:value={newExpenseDescription}
           />
-          <Input
+          <input
+            class="text-input"
             type="number"
             placeholder="Betrag"
             bind:value={newExpenseAmount}
@@ -576,7 +577,7 @@
             {/each}
           </select>
           <button class="pill pill-cta" type="button" onclick={handleAddExpense} disabled={!canAddExpense}>
-            Hinzufügen
+            + Hinzufügen
           </button>
         </div>
       </section>
@@ -589,13 +590,14 @@
           {#if selectedGroup.expenses.length === 0}
             <p class="empty-hint">Noch keine Salden, da bisher keine Ausgaben existieren.</p>
           {:else}
-            <div class="list-container">
+            <div class="item-list">
               {#each balances as b}
-                <ListRow>
-                  <div slot="content" class="balance-info">
-                    <span class="balance-name">{getParticipantName(selectedGroup, b.participantId)}</span>
+                <div class="list-item balance-item">
+                  <div class="item-main-info">
+                    <span class="item-icon"><Icon name="wallet" size={18} /></span>
+                    <span class="item-label">{getParticipantName(selectedGroup, b.participantId)}</span>
                   </div>
-                  <div slot="actions" class="balance-status">
+                  <div class="balance-status">
                     <span class="balance-amount" class:positive={b.net > 0.01} class:negative={b.net < -0.01}>
                       {b.net.toFixed(2)} {newExpenseCurrency}
                     </span>
@@ -607,7 +609,7 @@
                       <span class="status-badge status-neutral">ausgeglichen</span>
                     {/if}
                   </div>
-                </ListRow>
+                </div>
               {/each}
             </div>
           {/if}
@@ -619,22 +621,20 @@
           {#if !selectedGroup.expenses.length}
             <p class="empty-hint">Keine Vorschläge, da noch keine Ausgaben erfasst sind.</p>
           {:else if settlements.length === 0}
-            <p class="empty-hint">Alles ist bereits ausgeglichen.</p>
+            <p class="empty-hint">Alles ist bereits ausgeglichen. ✓</p>
           {:else}
-            <div class="list-container">
+            <div class="item-list">
               {#each settlements as s}
-                <ListRow divider={true}>
-                  <div slot="content" class="settlement-info">
-                    <span class="settlement-text">
-                      <strong>{getParticipantName(selectedGroup, s.fromParticipantId)}</strong>
-                      <span class="settlement-arrow">→</span>
-                      <strong>{getParticipantName(selectedGroup, s.toParticipantId)}</strong>
-                    </span>
+                <div class="list-item settlement-item">
+                  <div class="settlement-flow">
+                    <span class="settlement-person from">{getParticipantName(selectedGroup, s.fromParticipantId)}</span>
+                    <span class="settlement-arrow">→</span>
+                    <span class="settlement-person to">{getParticipantName(selectedGroup, s.toParticipantId)}</span>
                   </div>
-                  <span slot="actions" class="settlement-amount">
+                  <span class="settlement-amount">
                     {s.amount.toFixed(2)} {newExpenseCurrency}
                   </span>
-                </ListRow>
+                </div>
               {/each}
             </div>
           {/if}
@@ -643,7 +643,7 @@
     {:else}
       <section class="card-surface">
         <div class="empty-state">
-          <span class="empty-icon">👥</span>
+          <span class="empty-icon"><Icon name="users" size={48} strokeWidth={1.5} /></span>
           <h3 class="empty-title">Keine Gruppe ausgewählt</h3>
           <p class="empty-desc">Wähle oben eine bestehende Gruppe aus oder erstelle eine neue.</p>
         </div>
@@ -729,41 +729,142 @@
     font-size: 1rem;
   }
 
-  /* ===== CARD LABEL (matches Dashboard) ===== */
+  /* ===== CARD LABEL (matches Help page) ===== */
   .card-label {
     display: inline-block;
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--text) 62%, var(--text-secondary) 38%);
-    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
   }
 
-  /* ===== NAVIGATION LIST ===== */
-  .nav-list {
+  /* ===== ITEM LIST (new Help-style) ===== */
+  .item-list {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .nav-item-btn {
-    width: 100%;
+  .list-item {
     display: flex;
     align-items: center;
-    padding: 0;
-    background: transparent;
-    border: none;
-    color: var(--text);
-    font-size: 1.0625rem;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-    letter-spacing: -0.01em;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    transition: background 0.15s, border-color 0.15s;
   }
 
-  :global(.list-row--active) .nav-item-btn {
-    color: var(--primary);
-    font-weight: 600;
+  .list-item:hover {
+    background: color-mix(in oklab, var(--secondary) 80%, var(--primary-soft-bg) 20%);
   }
+
+  .list-item.active {
+    background: color-mix(in oklab, var(--primary-soft-bg) 40%, var(--secondary) 60%);
+    border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  }
+
+  .item-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+  }
+
+  .item-main-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+  }
+
+  .list-item.active .item-icon {
+    color: var(--primary);
+  }
+
+  .item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .item-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .list-item.active .item-label {
+    color: var(--primary);
+  }
+
+  .item-sublabel {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .item-action {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .item-action:hover {
+    background: var(--surface);
+    color: var(--text);
+    border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  }
+
+  /* ===== TEXT INPUT (matches Help search-input) ===== */
+  .text-input {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    background: var(--secondary);
+    color: var(--text);
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .text-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+
+  .text-input::placeholder {
+    color: var(--text-secondary);
+  }
+
+  /* ===== NAVIGATION LIST (removed, using item-list now) ===== */
 
   /* ===== PILL BUTTONS (matches Dashboard) ===== */
   .pill {
@@ -888,12 +989,12 @@
     gap: 0.75rem;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px dashed var(--border);
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;
   }
 
-  .new-group-form :global(.tw-input-wrapper) {
+  .new-group-form .text-input {
     flex: 1;
     min-width: 200px;
   }
@@ -972,45 +1073,9 @@
     color: var(--text-secondary);
   }
 
-  /* ===== LIST CONTAINER ===== */
-  .list-container {
-    margin-bottom: 1rem;
-  }
-
-  /* ===== PARTICIPANT INFO ===== */
-  .participant-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .participant-name {
-    font-size: 1.0625rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .participant-email {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
-  /* ===== EXPENSE INFO ===== */
-  .expense-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .expense-desc {
-    font-size: 1.0625rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .expense-meta {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+  /* ===== BALANCE ITEM ===== */
+  .balance-item {
+    align-items: center;
   }
 
   /* ===== BALANCE LAYOUT ===== */
@@ -1026,17 +1091,6 @@
   }
 
   /* ===== BALANCE INFO ===== */
-  .balance-info {
-    display: flex;
-    align-items: center;
-  }
-
-  .balance-name {
-    font-size: 1.0625rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
   .balance-status {
     display: flex;
     align-items: center;
@@ -1044,7 +1098,7 @@
   }
 
   .balance-amount {
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text);
@@ -1084,27 +1138,32 @@
     border-color: var(--border);
   }
 
-  /* ===== SETTLEMENT INFO ===== */
-  .settlement-info {
-    display: flex;
-    align-items: center;
+  /* ===== SETTLEMENT ITEM ===== */
+  .settlement-item {
+    flex-wrap: wrap;
   }
 
-  .settlement-text {
+  .settlement-flow {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.0625rem;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .settlement-person {
+    font-weight: 600;
+    color: var(--text);
   }
 
   .settlement-arrow {
     color: var(--text-secondary);
     font-weight: 400;
+    font-size: 1.1rem;
   }
 
   .settlement-amount {
-    font-size: 1.0625rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--primary);
     font-variant-numeric: tabular-nums;
   }
@@ -1114,15 +1173,10 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    align-items: flex-end;
+    align-items: center;
     padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px dashed var(--border);
     margin-top: 1rem;
-  }
-
-  .form-row :global(.tw-input-wrapper) {
-    flex: 1;
-    min-width: 140px;
   }
 
   /* ===== SELECT INPUT (matches Converter) ===== */
@@ -1165,8 +1219,9 @@
     gap: 0.75rem;
   }
 
-  .amount-edit :global(.tw-input-wrapper) {
-    width: 100px;
+  .amount-edit .text-input {
+    width: 120px;
+    flex: none;
   }
 
   .currency-tag {
@@ -1188,10 +1243,12 @@
   }
 
   .empty-icon {
-    font-size: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 1.5rem;
-    opacity: 0.5;
-    filter: grayscale(20%);
+    color: var(--text-secondary);
+    opacity: 0.6;
   }
 
   .empty-title {
@@ -1241,17 +1298,13 @@
       font-size: 1.375rem;
     }
 
-    .nav-item-btn {
-      font-size: 1rem;
-    }
-
     .form-row {
       flex-direction: column;
       align-items: stretch;
       gap: 0.75rem;
     }
 
-    .form-row :global(.tw-input-wrapper),
+    .form-row .text-input,
     .form-row .select-input,
     .form-row .pill {
       width: 100%;
@@ -1263,7 +1316,7 @@
       flex-direction: column;
     }
 
-    .new-group-form :global(.tw-input-wrapper) {
+    .new-group-form .text-input {
       min-width: 0;
     }
 
@@ -1305,7 +1358,7 @@
       gap: 0.35rem;
     }
 
-    .settlement-text {
+    .settlement-flow {
       flex-wrap: wrap;
     }
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fetchRateViaProxy, getStaticRate } from '$lib/utils/currency.js';
+  import Icon from '$lib/components/Icon.svelte';
 
   let amountStr = $state<string>(''); // kein fuehrendes "0"
   let base = $state<'CHF' | 'EUR' | 'USD' | 'JPY' | 'GBP'>('CHF');
@@ -78,7 +79,7 @@
   }
 
   function copyResult() {
-    const txt = `${fmtMoney(parseAmount(amountStr), base)} = ${fmtMoney(result, target)}`;
+    const txt = fmtMoney(result, target);
     navigator.clipboard?.writeText(txt);
     const btn = document.querySelector<HTMLButtonElement>('.copy-btn');
     btn?.classList.add('flash');
@@ -120,9 +121,6 @@
           bind:value={amountStr}
           aria-label="Betrag in Ausgangswährung"
         />
-        <button class="copy-btn" type="button" onclick={copyResult} title="Ergebnis kopieren">
-          ⧉
-        </button>
       </div>
     </div>
 
@@ -141,7 +139,7 @@
 
       <div class="swap-col">
         <button type="button" class="swap" onclick={swap} aria-label="Währungen tauschen">
-          ⇄
+          <Icon name="arrow-right" size={20} />
         </button>
       </div>
 
@@ -168,6 +166,9 @@
           <span class="to">
             {fmtMoney(result, target)}
           </span>
+          <button class="copy-btn" type="button" onclick={copyResult} title="Ergebnis kopieren">
+            <Icon name="copy" size={16} />
+          </button>
         </div>
         <div class="rate-line">
           {#if loading}
@@ -184,8 +185,8 @@
       </div>
 
       <div class="result-actions">
-        <button class="primary" type="button" onclick={addToHistory}>
-          Zur Historie hinzufügen
+        <button class="pill pill-cta" type="button" onclick={addToHistory}>
+          <Icon name="plus" size={16} /> Zur Historie
         </button>
       </div>
     </div>
@@ -212,20 +213,21 @@
 
     {#if history.length}
       <section class="history card-surface">
-      <h2>Letzte Umrechnungen</h2>
-      <ul>
-        {#each history as h}
-          <li>
-            <span class="time">
-              {new Date(h.ts).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <span class="entry">
-              {fmtMoney(h.amount, h.base)} →
-              <strong>{fmtMoney(h.result, h.target)}</strong>
-            </span>
-          </li>
-        {/each}
-      </ul>
+        <span class="card-label">Letzte Umrechnungen</span>
+        <ul class="history-list">
+          {#each history as h}
+            <li class="history-item">
+              <span class="history-icon"><Icon name="credit-card" size={16} /></span>
+              <span class="history-time">
+                {new Date(h.ts).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span class="history-entry">
+                {fmtMoney(h.amount, h.base)} →
+                <strong>{fmtMoney(h.result, h.target)}</strong>
+              </span>
+            </li>
+          {/each}
+        </ul>
       </section>
     {/if}
   </div>
@@ -305,7 +307,20 @@
   }
 
   .history {
-    padding: 1.3rem 1.5rem;
+    padding: 1.5rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* ===== CARD LABEL (matches Help/TripSplit) ===== */
+  .card-label {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
   }
 
   :global([data-theme='dark']) .card-surface {
@@ -364,20 +379,30 @@
   }
 
   .copy-btn {
-    border: 1px solid var(--border);
-    background: var(--surface);
-    padding: 0.35rem 0.55rem;
-    border-radius: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0.4rem;
+    border-radius: 0.6rem;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: transform 0.12s ease, background 0.15s ease;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    transition: all 0.15s ease;
   }
+
   .copy-btn:hover {
-    background: var(--secondary-hover);
-    transform: translateY(-1px);
+    opacity: 1;
+    color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+    transform: scale(1.1);
   }
+
   :global(.copy-btn.flash) {
-    transform: scale(1.05);
+    color: var(--success, #22c55e);
+    transform: scale(1.15);
+    opacity: 1;
   }
 
   .grid {
@@ -515,25 +540,34 @@
     margin-top: 0.2rem;
   }
 
-  .primary {
-    padding: 0.55rem 0.95rem;
-    border-radius: 0.9rem;
-    border: 1px solid color-mix(in oklab, var(--primary) 40%, transparent);
+  /* ===== PILL BUTTONS (matches Help/TripSplit) ===== */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.3rem;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+
+  .pill-cta {
     background: linear-gradient(
       180deg,
       color-mix(in oklab, var(--primary) 88%, #ffffff 12%),
       var(--primary)
     );
     color: var(--primary-contrast);
-    cursor: pointer;
-    font-size: 0.92rem;
-    font-weight: 600;
-    box-shadow: 0 8px 18px color-mix(in oklab, var(--primary) 22%, transparent);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+    box-shadow: 0 6px 14px color-mix(in oklab, var(--primary) 18%, transparent);
   }
-  .primary:hover {
+
+  .pill-cta:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px color-mix(in oklab, var(--primary) 28%, transparent);
+    box-shadow: 0 8px 18px color-mix(in oklab, var(--primary) 25%, transparent);
   }
 
   .accuracy {
@@ -571,36 +605,53 @@
     overflow: auto;
   }
 
-  .history h2 {
-    margin: 0 0 0.6rem;
-    font-size: 1.05rem;
-  }
-
-  .history ul {
+  /* ===== HISTORY LIST (matches Help/TripSplit item-list) ===== */
+  .history-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    gap: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .history li {
+  .history-item {
     display: flex;
-    justify-content: space-between;
-    gap: 0.8rem;
-    padding: 0.5rem 0.65rem;
-    border-radius: 0.8rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.9rem;
     border: 1px solid var(--border);
     background: var(--surface);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    transition: background 0.15s ease;
   }
 
-  .history .time {
+  .history-item:hover {
+    background: var(--secondary);
+  }
+
+  .history-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--text-secondary);
+    flex-shrink: 0;
   }
 
-  .history .entry strong {
+  .history-time {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-width: 3.5rem;
+  }
+
+  .history-entry {
+    flex: 1;
+  }
+
+  .history-entry strong {
     font-weight: 600;
+    color: var(--primary);
   }
 
   @media (max-width: 640px) {
