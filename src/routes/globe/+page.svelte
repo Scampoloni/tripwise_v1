@@ -1,7 +1,8 @@
 <script>
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import WorldGlobe from '$lib/components/WorldGlobe.svelte';
-  import { trips } from '$lib/stores/trips.js';
+  import { trips, loadTrips } from '$lib/stores/trips.js';
   import { getTripsWithCoordinates } from '$lib/utils/tripsView.js';
   import { getWorldTravelStats } from '$lib/utils/worldStats.js';
   import Icon from '$lib/components/Icon.svelte';
@@ -9,6 +10,27 @@
   const allTrips = $derived($trips ?? []);
   const globeTrips = $derived(getTripsWithCoordinates(allTrips));
   const worldStats = $derived(getWorldTravelStats(allTrips));
+
+  // Show all countries toggle
+  let showAllCountries = $state(false);
+  const MAX_COUNTRIES = 5;
+  const visibleCountries = $derived(
+    showAllCountries ? worldStats.countries : worldStats.countries.slice(0, MAX_COUNTRIES)
+  );
+  const hasMoreCountries = $derived(worldStats.countries.length > MAX_COUNTRIES);
+
+  let isLoading = $state(true);
+
+  onMount(async () => {
+    // Load trips when page is refreshed directly
+    try {
+      await loadTrips();
+    } catch (err) {
+      console.error('Failed to load trips:', err);
+    } finally {
+      isLoading = false;
+    }
+  });
 </script>
 
 <svelte:head>
@@ -41,9 +63,18 @@
 
     {#if worldStats.countries.length > 0}
       <div class="country-list">
-        {#each worldStats.countries as code}
+        {#each visibleCountries as code}
           <span class="country-chip">{code}</span>
         {/each}
+        {#if hasMoreCountries}
+          <button 
+            class="country-toggle" 
+            type="button" 
+            onclick={() => showAllCountries = !showAllCountries}
+          >
+            {showAllCountries ? 'Weniger' : `+${worldStats.countries.length - MAX_COUNTRIES} mehr`}
+          </button>
+        {/if}
       </div>
     {:else}
       <p class="stats-hint">Noch keine abgeschlossenen Reisen mit Länder-Code.</p>
@@ -59,7 +90,13 @@
       <h2>Trips mit Koordinaten</h2>
       <p>Visualisiert geplante, aktive und abgeschlossene Ziele</p>
     </div>
-    <WorldGlobe trips={globeTrips} height={420} />
+    {#if isLoading}
+      <div class="globe-loading">
+        <p>Lade Trips...</p>
+      </div>
+    {:else}
+      <WorldGlobe trips={globeTrips} height={420} />
+    {/if}
   </section>
 </section>
 
@@ -166,11 +203,35 @@
     border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
   }
 
+  .country-toggle {
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--primary);
+    font-size: 0.85rem;
+    border: 1px dashed color-mix(in oklab, var(--primary) 50%, transparent);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .country-toggle:hover {
+    background: color-mix(in oklab, var(--primary) 10%, transparent);
+    border-color: var(--primary);
+  }
+
   .globe-panel {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 1.6rem;
+  }
+
+  .globe-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 420px;
+    color: var(--text-secondary);
   }
 
   .globe-header h2 {

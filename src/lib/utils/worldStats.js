@@ -1,6 +1,6 @@
 const TOTAL_COUNTRIES = 195;
 
-const COMPLETED_STATUSES = new Set(['completed', 'complete', 'finished', 'done']);
+const COMPLETED_STATUSES = new Set(['completed', 'complete', 'finished', 'done', 'active']);
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled']);
 
 function normalizeCountryCode(trip) {
@@ -17,10 +17,10 @@ function parseDate(value) {
   return Number.isNaN(parsed.valueOf()) ? null : parsed;
 }
 
-function hasTripEnded(trip) {
-  const end = parseDate(trip?.endDate) ?? parseDate(trip?.startDate);
-  if (!end) return false;
-  return end.valueOf() < Date.now();
+function hasTripStarted(trip) {
+  const start = parseDate(trip?.startDate);
+  if (!start) return false;
+  return start.valueOf() <= Date.now();
 }
 
 function shouldCountTrip(trip) {
@@ -28,7 +28,8 @@ function shouldCountTrip(trip) {
   const status = typeof trip.status === 'string' ? trip.status.trim().toLowerCase() : '';
   if (COMPLETED_STATUSES.has(status)) return true;
   if (CANCELLED_STATUSES.has(status)) return false;
-  return hasTripEnded(trip);
+  // Count if trip has started (even if no explicit status)
+  return hasTripStarted(trip);
 }
 
 export function getWorldTravelStats(allTrips) {

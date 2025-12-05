@@ -17,16 +17,8 @@
   };
 
   let container;
-  let renderer = null;
-  let scene = null;
-  let camera = null;
   let globe = null;
-  let controls = null;
-  let animationFrameId = null;
-  let resizeHandler = null;
-  let ready = false;
   let destroyed = false;
-  let animationActive = false;
 
   const normalizedHeight = () => Math.max(200, Number(height) || 320);
 
@@ -51,63 +43,9 @@
   }
 
   function updatePoints() {
-    if (!ready || !globe || destroyed) return;
-
-    if (typeof globe.pointsData !== 'function') {
-      console.warn('WorldGlobe missing pointsData API, skipping update');
-      return;
-    }
-
+    if (!globe || destroyed) return;
     const points = buildPointData(trips);
-    if (points.length === 0) {
-      globe.pointsData([]);
-      return;
-    }
-
     globe.pointsData(points);
-
-    if (typeof globe.pointAltitude === 'function') {
-      globe.pointAltitude(0.02);
-    }
-    if (typeof globe.pointRadius === 'function') {
-      globe.pointRadius(0.6);
-    }
-    if (typeof globe.pointColor === 'function') {
-      globe.pointColor((d) => statusToColor(d.status));
-    }
-    if (typeof globe.pointLabel === 'function') {
-      globe.pointLabel((d) => `${d.name}\n${statusLabel(d.status)}`);
-    }
-  }
-
-  function cleanup() {
-    try {
-      destroyed = true;
-      animationActive = false;
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-      if (typeof window !== 'undefined' && resizeHandler) {
-        window.removeEventListener('resize', resizeHandler);
-        resizeHandler = null;
-      }
-      controls?.dispose?.();
-      controls = null;
-      if (renderer) {
-        renderer.dispose();
-        if (renderer.domElement?.parentNode) {
-          renderer.domElement.parentNode.removeChild(renderer.domElement);
-        }
-        renderer = null;
-      }
-      scene = null;
-      camera = null;
-      globe = null;
-      ready = false;
-    } catch (err) {
-      console.error('WorldGlobe cleanup failed', err);
-    }
   }
 
   onMount(() => {
@@ -115,84 +53,61 @@
     destroyed = false;
 
     let active = true;
+    let resizeObserver = null;
 
     (async () => {
       try {
-        const [threeMod, globeMod, controlsMod] = await Promise.all([
-          import('three'),
-          import('three-globe'),
-          import('three/examples/jsm/controls/OrbitControls.js')
-        ]);
+        const Globe = (await import('globe.gl')).default;
 
         if (!active || destroyed || !container) return;
-
-        const THREE = threeMod;
-        const { default: ThreeGlobe } = globeMod;
-        const { OrbitControls } = controlsMod;
 
         const width = container.clientWidth || 600;
         const targetHeight = normalizedHeight();
 
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio((typeof window !== 'undefined' && window.devicePixelRatio) || 1);
-        renderer.setSize(width, targetHeight);
-        renderer.setClearColor(0x020617, 1);
-        container.appendChild(renderer.domElement);
-
-        scene = new THREE.Scene();
-
-        camera = new THREE.PerspectiveCamera(45, width / targetHeight, 0.1, 1000);
-        camera.position.z = 260;
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.65);
-        dirLight.position.set(30, 30, 30);
-        scene.add(ambientLight);
-        scene.add(dirLight);
-
-        globe = new ThreeGlobe()
+        globe = Globe()
+          .width(width)
+          .height(targetHeight)
+          .backgroundColor('rgba(2, 6, 23, 0)')
           .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
           .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
           .showAtmosphere(true)
           .atmosphereColor('#38bdf8')
           .atmosphereAltitude(0.15)
-          .showGraticules(true);
-        scene.add(globe);
+          .showGraticules(true)
+          .pointAltitude(0.02)
+          .pointRadius(0.5)
+          .pointColor((d) => statusToColor(d.status))
+          .pointLabel((d) => `
+            <div style="
+              background: rgba(15, 23, 42, 0.95);
+              border: 1px solid rgba(51, 65, 85, 0.8);
+              border-radius: 6px;
+              padding: 8px 12px;
+              font-family: system-ui, sans-serif;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            ">
+              <div style="font-weight: 600; color: #e2e8f0; font-size: 14px;">${d.name}</div>
+              <div style="color: ${statusToColor(d.status)}; font-size: 12px; margin-top: 2px;">${statusLabel(d.status)}</div>
+            </div>
+          `)
+          (container);
 
-        controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.enableZoom = true;
-        controls.enablePan = false;
-        controls.minDistance = 150;
-        controls.maxDistance = 450;
+        // Auto-rotate
+        globe.controls().autoRotate = true;
+        globe.controls().autoRotateSpeed = 0.3;
+        globe.controls().enableZoom = true;
+        globe.controls().minDistance = 150;
+        globe.controls().maxDistance = 450;
 
-        const animate = () => {
-          if (!animationActive || destroyed) return;
-          animationFrameId = requestAnimationFrame(animate);
-          if (globe) {
-            globe.rotation.y += 0.0005;
+        // Handle resize
+        resizeObserver = new ResizeObserver(() => {
+          if (globe && container && !destroyed) {
+            globe.width(container.clientWidth);
+            globe.height(normalizedHeight());
           }
-          controls?.update?.();
-          renderer?.render?.(scene, camera);
-        };
-        animationActive = true;
-        animate();
+        });
+        resizeObserver.observe(container);
 
-        resizeHandler = () => {
-          if (!renderer || !camera || !container || destroyed) return;
-          const w = container.clientWidth || width;
-          const h = normalizedHeight();
-          renderer.setSize(w, h);
-          camera.aspect = w / h;
-          camera.updateProjectionMatrix();
-        };
-
-        if (typeof window !== 'undefined') {
-          window.addEventListener('resize', resizeHandler);
-        }
-
-        ready = true;
         updatePoints();
       } catch (err) {
         console.error('WorldGlobe init failed', err);
@@ -202,20 +117,29 @@
     return () => {
       active = false;
       destroyed = true;
-      cleanup();
+      resizeObserver?.disconnect();
+      if (globe) {
+        globe._destructor?.();
+        globe = null;
+      }
     };
   });
 
-  // Svelte 5: Reaktiv auf trips-Änderungen reagieren
+  // Reaktiv auf trips-Änderungen reagieren
   $effect(() => {
-    if (ready && trips) {
+    // Access trips.length to create a dependency on trips changes
+    const tripCount = trips?.length ?? 0;
+    if (globe && !destroyed) {
       updatePoints();
     }
   });
 </script>
 
 <div class="world-globe" style={`height:${normalizedHeight()}px`}>
-  <div class="world-globe__canvas" bind:this={container}></div>
+  <div 
+    class="world-globe__canvas" 
+    bind:this={container}
+  ></div>
   {#if !trips || trips.length === 0}
     <p class="world-globe__empty">Noch keine Trips mit Koordinaten</p>
   {/if}
@@ -237,6 +161,10 @@
     width: 100%;
     height: 100%;
     max-width: 100%;
+  }
+
+  .world-globe__canvas :global(canvas) {
+    border-radius: 1rem;
   }
 
   .world-globe__empty {
