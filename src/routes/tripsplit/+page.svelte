@@ -4,11 +4,8 @@
     createGroup,
     addParticipant,
     addExpense,
-    updateGroupName,
     deleteGroup,
-    updateParticipant,
     deleteParticipant,
-    updateExpense,
     deleteExpense,
     computeBalances,
     computeSettlements
@@ -37,25 +34,14 @@
   // Phase 5, Teilnehmer State
   let newParticipantName = $state('');
   let newParticipantEmail = $state('');
+  let showAllParticipants = $state(false);
 
   // Phase 6, Ausgaben State
   let newExpenseDescription = $state('');
   let newExpenseAmount = $state(''); // als String aus dem Input
   let newExpenseCurrency = $state<TripSplitCurrencyCode>('CHF');
   let newExpensePaidBy = $state<string>('');
-
-  // Edit State
-  let editingGroupId = $state<string | null>(null);
-  let editingGroupName = $state('');
-  let confirmingDeleteGroupId = $state<string | null>(null);
-
-  let editingParticipantId = $state<string | null>(null);
-  let editingParticipantName = $state('');
-  let editingParticipantEmail = $state('');
-
-  let editingExpenseId = $state<string | null>(null);
-  let editingExpenseDescription = $state('');
-  let editingExpenseAmount = $state('');
+  let showAllExpenses = $state(false);
 
   // Phase 7, Balances + Settlements
   const balances = $derived<TripSplitBalance[]>(
@@ -65,6 +51,18 @@
   const settlements = $derived<TripSplitSettlement[]>(
     balances.length > 0 ? computeSettlements(balances) : []
   );
+
+  // Visible items (max 3, unless showAll)
+  const visibleParticipants = $derived(
+    showAllParticipants ? activeParticipants : activeParticipants.slice(0, 3)
+  );
+  const hasMoreParticipants = $derived(activeParticipants.length > 3);
+
+  const activeExpenses = $derived(selectedGroup?.expenses ?? []);
+  const visibleExpenses = $derived(
+    showAllExpenses ? activeExpenses : activeExpenses.slice(0, 3)
+  );
+  const hasMoreExpenses = $derived(activeExpenses.length > 3);
 
   $effect(() => {
     const participants = activeParticipants;
@@ -81,6 +79,13 @@
     }
   });
 
+  // Reset showAll when group changes
+  $effect(() => {
+    selectedGroupId;
+    showAllParticipants = false;
+    showAllExpenses = false;
+  });
+
   const canCreateGroup = $derived(newGroupName.trim().length > 0);
 
   const canAddParticipant = $derived(newParticipantName.trim().length > 0);
@@ -94,16 +99,6 @@
     newExpenseDescription.trim().length > 0 && expenseAmountValue > 0 && Boolean(newExpensePaidBy)
   );
 
-  $effect(() => {
-    selectedGroup;
-    editingParticipantId = null;
-    editingParticipantName = '';
-    editingParticipantEmail = '';
-    editingExpenseId = null;
-    editingExpenseDescription = '';
-    editingExpenseAmount = '';
-  });
-
   function handleCreateGroup() {
     const name = newGroupName.trim();
     if (!name) return;
@@ -115,7 +110,6 @@
 
   function handleSelectGroup(id: string) {
     selectedGroupId = id;
-    cancelDeleteGroup();
   }
 
   function handleAddParticipant() {
@@ -177,120 +171,22 @@
     return p ? p.name : 'Unbekannt';
   }
 
-  function startGroupRename(group: TripSplitGroup) {
-    editingGroupId = group.id;
-    editingGroupName = group.name;
-  }
-
-  function cancelGroupRename() {
-    editingGroupId = null;
-    editingGroupName = '';
-  }
-
-  function handleSaveGroupName(groupId: string) {
-    const name = editingGroupName.trim();
-    if (!name) return;
-    updateGroupName(groupId, name);
-    cancelGroupRename();
-  }
-
-  function requestDeleteGroup(groupId: string) {
-    confirmingDeleteGroupId = groupId;
-  }
-
-  function cancelDeleteGroup() {
-    confirmingDeleteGroupId = null;
-  }
-
   function handleDeleteGroup(groupId: string) {
     deleteGroup(groupId);
     if (selectedGroupId === groupId) {
       selectedGroupId = null;
     }
-    if (editingGroupId === groupId) {
-      cancelGroupRename();
-    }
-    if (confirmingDeleteGroupId === groupId) {
-      cancelDeleteGroup();
-    }
-  }
-
-  function startParticipantEdit(participant: { id: string; name: string; email?: string }) {
-    editingParticipantId = participant.id;
-    editingParticipantName = participant.name;
-    editingParticipantEmail = participant.email ?? '';
-  }
-
-  function cancelParticipantEdit() {
-    editingParticipantId = null;
-    editingParticipantName = '';
-    editingParticipantEmail = '';
-  }
-
-  function handleSaveParticipant(participantId: string) {
-    if (!selectedGroup) return;
-    const name = editingParticipantName.trim();
-    const email = editingParticipantEmail.trim();
-    if (!name) return;
-    updateParticipant(selectedGroup.id, participantId, {
-      name,
-      email: email || undefined
-    });
-    cancelParticipantEdit();
   }
 
   function handleDeleteParticipant(participantId: string) {
     if (!selectedGroup) return;
-    if (!confirm('Teilnehmer wirklich löschen?')) return;
     deleteParticipant(selectedGroup.id, participantId);
-    if (editingParticipantId === participantId) {
-      cancelParticipantEdit();
-    }
-  }
-
-  function startExpenseEdit(expense: { id: string; description: string; amount: number }) {
-    editingExpenseId = expense.id;
-    editingExpenseDescription = expense.description;
-    editingExpenseAmount = expense.amount.toString();
-  }
-
-  function cancelExpenseEdit() {
-    editingExpenseId = null;
-    editingExpenseDescription = '';
-    editingExpenseAmount = '';
-  }
-
-  function handleSaveExpense(expenseId: string) {
-    if (!selectedGroup) return;
-    const description = editingExpenseDescription.trim();
-    const amount = Number.parseFloat(editingExpenseAmount);
-    if (!description) return;
-    if (!Number.isFinite(amount) || amount <= 0) return;
-    updateExpense(selectedGroup.id, expenseId, {
-      description,
-      amount
-    });
-    cancelExpenseEdit();
   }
 
   function handleDeleteExpense(expenseId: string) {
     if (!selectedGroup) return;
-    if (!confirm('Ausgabe wirklich löschen?')) return;
     deleteExpense(selectedGroup.id, expenseId);
-    if (editingExpenseId === expenseId) {
-      cancelExpenseEdit();
-    }
   }
-
-  $effect(() => {
-    const ids = groups.map((g) => g.id);
-    if (editingGroupId && !ids.includes(editingGroupId)) {
-      cancelGroupRename();
-    }
-    if (confirmingDeleteGroupId && !ids.includes(confirmingDeleteGroupId)) {
-      cancelDeleteGroup();
-    }
-  });
 </script>
 
 <section class="page-shell" data-animate="fadeUp">
@@ -323,67 +219,18 @@
               </button>
               <button
                 type="button"
-                class="item-action"
+                class="item-action item-action-delete"
+                title="Gruppe löschen"
                 onclick={(event) => {
                   event.stopPropagation();
-                  if (editingGroupId === group.id) {
-                    cancelGroupRename();
-                  } else if (confirmingDeleteGroupId === group.id) {
-                    cancelDeleteGroup();
-                  } else {
-                    startGroupRename(group);
-                  }
+                  handleDeleteGroup(group.id);
                 }}
               >
-                ⋯
+                <Icon name="trash" size={16} />
               </button>
             </div>
           {/each}
         </div>
-      {/if}
-
-      <!-- Inline Edit/Delete Form -->
-      {#if editingGroupId}
-        {@const editingGroup = groups.find(g => g.id === editingGroupId)}
-        {#if editingGroup}
-          <div class="action-form">
-            <p class="form-label">Gruppe umbenennen: <strong>{editingGroup.name}</strong></p>
-            <input
-              class="text-input"
-              placeholder="Neuer Name"
-              bind:value={editingGroupName}
-            />
-            <div class="form-actions">
-              <button class="pill pill-cta" type="button" onclick={() => editingGroupId && handleSaveGroupName(editingGroupId)}>
-                Speichern
-              </button>
-              <button class="pill pill-ghost" type="button" onclick={() => editingGroupId && requestDeleteGroup(editingGroupId)}>
-                Löschen
-              </button>
-              <button class="pill pill-secondary" type="button" onclick={cancelGroupRename}>
-                Abbrechen
-              </button>
-            </div>
-          </div>
-        {/if}
-      {/if}
-
-      {#if confirmingDeleteGroupId}
-        {@const deletingGroup = groups.find(g => g.id === confirmingDeleteGroupId)}
-        {#if deletingGroup}
-          <div class="confirm-card">
-            <p class="confirm-title">„{deletingGroup.name}" wirklich löschen?</p>
-            <p class="confirm-desc">Alle Teilnehmer:innen und Ausgaben dieser Gruppe werden unwiderruflich entfernt.</p>
-            <div class="form-actions">
-              <button class="pill pill-danger" type="button" onclick={() => confirmingDeleteGroupId && handleDeleteGroup(confirmingDeleteGroupId)}>
-                Ja, löschen
-              </button>
-              <button class="pill pill-secondary" type="button" onclick={cancelDeleteGroup}>
-                Abbrechen
-              </button>
-            </div>
-          </div>
-        {/if}
       {/if}
 
       <!-- New Group Form -->
@@ -405,182 +252,140 @@
       <section class="card-surface">
         <div class="content-header">
           <h2 class="content-title">{selectedGroup.name}</h2>
-          <p class="content-meta">{selectedGroup.participants.length} {selectedGroup.participants.length === 1 ? 'Teilnehmer' : 'Teilnehmer:innen'}</p>
+          <p class="content-meta">{selectedGroup.participants.length} {selectedGroup.participants.length === 1 ? 'Teilnehmer' : 'Teilnehmer:innen'} • {selectedGroup.expenses.length} {selectedGroup.expenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}</p>
         </div>
       </section>
 
-      <!-- Teilnehmer Card -->
-      <section class="card-surface">
-        <span class="card-label">Teilnehmer</span>
+      <!-- Teilnehmer + Ausgaben Grid -->
+      <div class="two-column-grid">
+        <!-- Teilnehmer Card -->
+        <section class="card-surface">
+          <span class="card-label">Teilnehmer</span>
 
-        {#if selectedGroup.participants.length === 0}
-          <p class="empty-hint">Noch keine Teilnehmer hinzugefügt.</p>
-        {:else}
-          <div class="item-list">
-            {#each selectedGroup.participants as p}
-              {#if editingParticipantId === p.id}
-                <div class="inline-form">
-                  <input
-                    class="text-input"
-                    placeholder="Name"
-                    bind:value={editingParticipantName}
-                  />
-                  <input
-                    class="text-input"
-                    placeholder="E-Mail (optional)"
-                    bind:value={editingParticipantEmail}
-                  />
-                  <div class="inline-actions">
-                    <button class="pill pill-cta" type="button" onclick={() => handleSaveParticipant(p.id)}>
-                      Speichern
-                    </button>
-                    <button class="pill pill-ghost" type="button" onclick={() => handleDeleteParticipant(p.id)}>
-                      Löschen
-                    </button>
-                    <button class="pill pill-secondary" type="button" onclick={cancelParticipantEdit}>
-                      Abbrechen
-                    </button>
-                  </div>
-                </div>
-              {:else}
-                <div class="list-item">
-                  <div class="item-main-info">
-                    <span class="item-icon"><Icon name="user" size={18} /></span>
-                    <div class="item-details">
-                      <span class="item-label">{p.name}</span>
-                      {#if p.email}
-                        <span class="item-sublabel">{p.email}</span>
-                      {/if}
+          {#if activeParticipants.length === 0}
+            <p class="empty-hint">Noch keine Teilnehmer hinzugefügt.</p>
+          {:else}
+            <div class="item-list">
+              {#each visibleParticipants as p}
+                  <div class="list-item">
+                    <div class="item-main-info">
+                      <span class="item-icon"><Icon name="user" size={18} /></span>
+                      <div class="item-details">
+                        <span class="item-label">{p.name}</span>
+                        {#if p.email}
+                          <span class="item-sublabel">{p.email}</span>
+                        {/if}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      class="item-action item-action-delete"
+                      title="Teilnehmer löschen"
+                      onclick={() => handleDeleteParticipant(p.id)}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    class="item-action"
-                    onclick={() => {
-                      if (editingParticipantId === p.id) {
-                        cancelParticipantEdit();
-                      } else {
-                        startParticipantEdit(p);
-                      }
-                    }}
-                  >
-                    ⋯
-                  </button>
-                </div>
-              {/if}
-            {/each}
+              {/each}
+            </div>
+            {#if hasMoreParticipants && !showAllParticipants}
+              <button class="show-more-btn" onclick={() => showAllParticipants = true}>
+                Weitere Teilnehmer anzeigen ({activeParticipants.length - 3})
+              </button>
+            {/if}
+            {#if showAllParticipants && hasMoreParticipants}
+              <button class="show-more-btn" onclick={() => showAllParticipants = false}>
+                Weniger anzeigen
+              </button>
+            {/if}
+          {/if}
+
+          <div class="form-row">
+            <input
+              class="text-input"
+              placeholder="Name"
+              bind:value={newParticipantName}
+            />
+            <input
+              class="text-input"
+              placeholder="E-Mail (optional)"
+              bind:value={newParticipantEmail}
+            />
+            <button class="pill pill-cta" type="button" onclick={handleAddParticipant} disabled={!canAddParticipant}>
+              + Hinzufügen
+            </button>
           </div>
-        {/if}
+        </section>
 
-        <div class="form-row">
-          <input
-            class="text-input"
-            placeholder="Name"
-            bind:value={newParticipantName}
-          />
-          <input
-            class="text-input"
-            placeholder="E-Mail (optional)"
-            bind:value={newParticipantEmail}
-          />
-          <button class="pill pill-cta" type="button" onclick={handleAddParticipant} disabled={!canAddParticipant}>
-            + Hinzufügen
-          </button>
-        </div>
-      </section>
+        <!-- Ausgaben Card -->
+        <section class="card-surface">
+          <span class="card-label">Ausgaben</span>
 
-      <!-- Ausgaben Card -->
-      <section class="card-surface">
-        <span class="card-label">Ausgaben</span>
-
-        {#if selectedGroup.expenses.length === 0}
-          <p class="empty-hint">Noch keine Ausgaben erfasst.</p>
-        {:else}
-          <div class="item-list">
-            {#each selectedGroup.expenses as e}
-              {#if editingExpenseId === e.id}
-                <div class="inline-form">
-                  <input
-                    class="text-input"
-                    placeholder="Beschreibung"
-                    bind:value={editingExpenseDescription}
-                  />
-                  <div class="amount-edit">
-                    <input
-                      class="text-input"
-                      type="number"
-                      bind:value={editingExpenseAmount}
-                    />
-                    <span class="currency-tag">{e.currency}</span>
-                  </div>
-                  <div class="inline-actions">
-                    <button class="pill pill-cta" type="button" onclick={() => handleSaveExpense(e.id)}>
-                      Speichern
-                    </button>
-                    <button class="pill pill-ghost" type="button" onclick={() => handleDeleteExpense(e.id)}>
-                      Löschen
-                    </button>
-                    <button class="pill pill-secondary" type="button" onclick={cancelExpenseEdit}>
-                      Abbrechen
-                    </button>
-                  </div>
-                </div>
-              {:else}
-                <div class="list-item">
-                  <div class="item-main-info">
-                    <span class="item-icon"><Icon name="receipt" size={18} /></span>
-                    <div class="item-details">
-                      <span class="item-label">{e.description}</span>
-                      <span class="item-sublabel">{e.amount.toFixed(2)} {e.currency} • {getParticipantName(selectedGroup, e.paidBy)}</span>
+          {#if activeExpenses.length === 0}
+            <p class="empty-hint">Noch keine Ausgaben erfasst.</p>
+          {:else}
+            <div class="item-list">
+              {#each visibleExpenses as e}
+                  <div class="list-item">
+                    <div class="item-main-info">
+                      <span class="item-icon"><Icon name="receipt" size={18} /></span>
+                      <div class="item-details">
+                        <span class="item-label">{e.description}</span>
+                        <span class="item-sublabel">{e.amount.toFixed(2)} {e.currency} • {getParticipantName(selectedGroup, e.paidBy)}</span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      class="item-action item-action-delete"
+                      title="Ausgabe löschen"
+                      onclick={() => handleDeleteExpense(e.id)}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    class="item-action"
-                    onclick={() => {
-                      if (editingExpenseId === e.id) {
-                        cancelExpenseEdit();
-                      } else {
-                        startExpenseEdit(e);
-                      }
-                    }}
-                  >
-                    ⋯
-                  </button>
-                </div>
-              {/if}
-            {/each}
-          </div>
-        {/if}
+              {/each}
+            </div>
+            {#if hasMoreExpenses && !showAllExpenses}
+              <button class="show-more-btn" onclick={() => showAllExpenses = true}>
+                Weitere Ausgaben anzeigen ({activeExpenses.length - 3})
+              </button>
+            {/if}
+            {#if showAllExpenses && hasMoreExpenses}
+              <button class="show-more-btn" onclick={() => showAllExpenses = false}>
+                Weniger anzeigen
+              </button>
+            {/if}
+          {/if}
 
-        <div class="form-row">
-          <input
-            class="text-input"
-            placeholder="Beschreibung, z. B. Abendessen"
-            bind:value={newExpenseDescription}
-          />
-          <input
-            class="text-input"
-            type="number"
-            placeholder="Betrag"
-            bind:value={newExpenseAmount}
-          />
-          <select class="select-input" bind:value={newExpenseCurrency}>
-            <option value="CHF">CHF</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </select>
-          <select class="select-input" bind:value={newExpensePaidBy}>
-            <option value="" disabled>Bezahlt von ...</option>
-            {#each selectedGroup.participants as p}
-              <option value={p.id}>{p.name}</option>
-            {/each}
-          </select>
-          <button class="pill pill-cta" type="button" onclick={handleAddExpense} disabled={!canAddExpense}>
-            + Hinzufügen
-          </button>
-        </div>
-      </section>
+          <div class="form-row">
+            <input
+              class="text-input"
+              placeholder="Beschreibung, z. B. Abendessen"
+              bind:value={newExpenseDescription}
+            />
+            <input
+              class="text-input"
+              type="number"
+              placeholder="Betrag"
+              bind:value={newExpenseAmount}
+            />
+            <select class="select-input" bind:value={newExpenseCurrency}>
+              <option value="CHF">CHF</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
+            <select class="select-input" bind:value={newExpensePaidBy}>
+              <option value="" disabled>Bezahlt von ...</option>
+              {#each selectedGroup.participants as p}
+                <option value={p.id}>{p.name}</option>
+              {/each}
+            </select>
+            <button class="pill pill-cta" type="button" onclick={handleAddExpense} disabled={!canAddExpense}>
+              + Hinzufügen
+            </button>
+          </div>
+        </section>
+      </div>
 
       <!-- Balance Layout: Saldo + Ausgleichszahlungen -->
       <div class="balance-layout">
@@ -841,6 +646,17 @@
     border-color: color-mix(in oklab, var(--primary) 50%, transparent);
   }
 
+  .item-action-delete {
+    color: var(--danger, #ef4444);
+    border-color: color-mix(in oklab, var(--danger, #ef4444) 30%, transparent);
+  }
+
+  .item-action-delete:hover {
+    background: color-mix(in oklab, var(--danger, #ef4444) 10%, var(--surface));
+    color: var(--danger, #ef4444);
+    border-color: var(--danger, #ef4444);
+  }
+
   /* ===== TEXT INPUT (matches Help search-input) ===== */
   .text-input {
     flex: 1;
@@ -906,83 +722,6 @@
     background: var(--primary-hover);
   }
 
-  .pill-secondary {
-    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
-    color: var(--text);
-    border-color: color-mix(in oklab, var(--border) 80%, transparent);
-    box-shadow: 0 14px 30px color-mix(in oklab, #0f172a 14%, transparent);
-  }
-  .pill-secondary:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
-    transform: translateY(-1px);
-  }
-
-  .pill-ghost {
-    background: transparent;
-    border-color: color-mix(in oklab, var(--primary) 45%, transparent);
-    color: var(--primary);
-    box-shadow: none;
-  }
-  .pill-ghost:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--primary-soft-bg) 55%, transparent);
-  }
-
-  .pill-danger {
-    background: var(--danger);
-    color: #fff;
-    border-color: color-mix(in oklab, var(--danger) 45%, transparent);
-    box-shadow: 0 20px 38px color-mix(in oklab, var(--danger) 24%, transparent);
-  }
-  .pill-danger:hover:not(:disabled) {
-    transform: translateY(-1px);
-    filter: brightness(1.1);
-  }
-
-  :global([data-theme='dark']) .pill-secondary {
-    background: color-mix(in oklab, var(--surface) 70%, var(--primary-soft-bg) 30%);
-    border-color: color-mix(in oklab, var(--text) 18%, transparent);
-    color: var(--text);
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
-  }
-
-  :global([data-theme='dark']) .pill-secondary:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%);
-  }
-
-  :global([data-theme='dark']) .pill-ghost {
-    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
-    color: color-mix(in oklab, var(--primary) 70%, var(--text));
-  }
-
-  :global([data-theme='dark']) .pill-ghost:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--primary-soft-bg) 70%, transparent);
-  }
-
-  /* ===== ACTION FORMS ===== */
-  .action-form {
-    margin-top: 1rem;
-    padding: 1.5rem;
-    background: var(--secondary);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .form-label {
-    margin: 0 0 0.25rem;
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-    flex-wrap: wrap;
-  }
-
   /* ===== NEW GROUP FORM ===== */
   .new-group-form {
     display: flex;
@@ -997,48 +736,6 @@
   .new-group-form .text-input {
     flex: 1;
     min-width: 200px;
-  }
-
-  /* ===== INLINE FORMS ===== */
-  .inline-form {
-    margin-top: 0.75rem;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    background: var(--secondary);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-  }
-
-  .inline-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 0.25rem;
-    flex-wrap: wrap;
-  }
-
-  /* ===== CONFIRM CARD ===== */
-  .confirm-card {
-    margin-top: 1rem;
-    padding: 1.5rem;
-    background: color-mix(in oklab, var(--danger) 12%, var(--surface) 88%);
-    border: 1px solid color-mix(in oklab, var(--danger) 35%, transparent);
-    border-radius: var(--radius-lg);
-  }
-
-  .confirm-title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--danger);
-  }
-
-  .confirm-desc {
-    margin: 0.5rem 0 1rem;
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
   }
 
   /* ===== EMPTY HINTS ===== */
@@ -1076,6 +773,40 @@
   /* ===== BALANCE ITEM ===== */
   .balance-item {
     align-items: center;
+  }
+
+  /* ===== TWO COLUMN GRID (Teilnehmer + Ausgaben) ===== */
+  .two-column-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 900px) {
+    .two-column-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* ===== SHOW MORE BUTTON ===== */
+  .show-more-btn {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--secondary);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .show-more-btn:hover {
+    background: color-mix(in oklab, var(--primary-soft-bg) 30%, var(--secondary));
+    color: var(--primary);
+    border-color: var(--primary);
   }
 
   /* ===== BALANCE LAYOUT ===== */
@@ -1212,24 +943,6 @@
     box-shadow: 0 0 0 3px var(--focus-outer);
   }
 
-  /* ===== AMOUNT EDIT ===== */
-  .amount-edit {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .amount-edit .text-input {
-    width: 120px;
-    flex: none;
-  }
-
-  .currency-tag {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
   /* ===== EMPTY STATE ===== */
   .empty-state {
     display: flex;
@@ -1318,22 +1031,6 @@
 
     .new-group-form .text-input {
       min-width: 0;
-    }
-
-    .form-actions {
-      flex-direction: column;
-    }
-
-    .form-actions .pill {
-      width: 100%;
-    }
-
-    .inline-actions {
-      flex-direction: column;
-    }
-
-    .inline-actions .pill {
-      width: 100%;
     }
 
     .empty-state {

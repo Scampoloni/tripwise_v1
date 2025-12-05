@@ -216,7 +216,7 @@
       <button class="pill pill-secondary" type="button" onclick={() => goto('/trips')}>
         <Icon name="plane" size={16} /> Trips
       </button>
-      <button class="pill pill-secondary" type="button" onclick={() => goto('/trips/analytics')}>
+      <button class="pill pill-secondary" type="button" onclick={() => goto('/analytics')}>
         <Icon name="bar-chart" size={16} /> Analytics
       </button>
       <button class="pill pill-secondary" type="button" onclick={() => goto('/globe')}>
