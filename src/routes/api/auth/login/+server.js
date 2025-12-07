@@ -4,12 +4,13 @@ import { getUserByEmail } from '$lib/server/db';
 export async function POST({ request, cookies }) {
   try {
     const { email, password } = await request.json();
+    const cleanEmail = typeof email === 'string' ? email.trim() : '';
 
-    if (!email || !password) {
+    if (!cleanEmail || !password) {
       return json({ error: 'Email und Passwort erforderlich' }, { status: 400 });
     }
 
-    const user = await getUserByEmail(email);
+    const user = await getUserByEmail(cleanEmail);
     if (!user || user.password !== password) {
       return json({ error: 'Ungueltige Login Daten' }, { status: 401 });
     }
@@ -21,7 +22,7 @@ export async function POST({ request, cookies }) {
       maxAge: 60 * 60 * 24 * 7
     });
 
-    return json({ id: user.id, email: user.email });
+    return json({ id: user.id, email: user.email, displayName: user.displayName });
   } catch (err) {
     console.error('Login Fehler', err);
     return json({ error: 'Internal server error' }, { status: 500 });

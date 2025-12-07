@@ -5,6 +5,7 @@ import {
   updateTrip,
   deleteTrip
 } from '$lib/server/db';
+import { fetchHeroImageForDestination } from '$lib/server/heroImage';
 
 export async function GET({ params, locals }) {
   const userId = locals.userId;
@@ -30,6 +31,21 @@ export async function PATCH({ params, request, locals }) {
   }
 
   const data = await request.json();
+
+  if (data.destinationName || data.latitude !== undefined || data.longitude !== undefined || data.destinationLat !== undefined || data.destinationLon !== undefined) {
+    const heroMeta = await fetchHeroImageForDestination({
+      destinationName: data.destinationName,
+      latitude: data.latitude ?? data.destinationLat,
+      longitude: data.longitude ?? data.destinationLon,
+      cityName: data.cityName,
+      countryName: data.countryName
+    });
+
+    data.heroImageUrl = heroMeta.heroImageUrl ?? null;
+    if (heroMeta.cityName && data.cityName === undefined) data.cityName = heroMeta.cityName;
+    if (heroMeta.countryName && data.countryName === undefined) data.countryName = heroMeta.countryName;
+  }
+
   const trip = await updateTrip(params.id, data, userId);
 
   if (!trip) {

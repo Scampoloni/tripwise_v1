@@ -1,9 +1,76 @@
 // src/routes/api/trips/+server.js
 import { json } from '@sveltejs/kit';
-import { getTrips, createTrip } from '$lib/server/db';
+import { getTrips, createTrip, updateTrip } from '$lib/server/db';
+import { fetchHeroImageForDestination } from '$lib/server/heroImage';
 import { validateTripPayload } from '$lib/server/validators';
 
 const FALLBACK_PARTICIPANTS = Object.freeze([{ id: 'me', name: 'Du' }]);
+
+const MS_PER_DAY = 86_400_000;
+const WEATHER_STALE_MS = 6 * 60 * 60 * 1000; // 6h Refresh
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function daysUntilTrip(startDate) {
+  if (!startDate) return Number.POSITIVE_INFINITY;
+  const parsed = new Date(startDate);
+  if (Number.isNaN(parsed.getTime())) return Number.POSITIVE_INFINITY;
+  const today = startOfDay(new Date());
+  const target = startOfDay(parsed);
+  return Math.floor((target.getTime() - today.getTime()) / MS_PER_DAY);
+}
+
+function weatherCodeToText(code) {
+  const map = {
+    0: 'klar',
+    1: 'leicht bewölkt',
+    2: 'bewölkt',
+    3: 'stark bewölkt',
+    45: 'Nebel',
+    48: 'Nebel',
+    51: 'Nieselregen',
+    61: 'Regen',
+    71: 'Schnee',
+    80: 'Schauer',
+    95: 'Gewitter'
+  };
+  return map?.[code] || 'Wetter';
+}
+
+async function fetchWeatherPreview(lat, lon, startDate) {
+  if (lat == null || lon == null || !startDate) return null;
+
+  try {
+    const target = new Date(startDate);
+    if (Number.isNaN(target.getTime())) return null;
+    const dateStr = target.toISOString().slice(0, 10);
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_min,temperature_2m_max,weathercode&timezone=auto&forecast_days=16`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const idx = Array.isArray(data?.daily?.time)
+      ? data.daily.time.findIndex((d) => d === dateStr)
+      : -1;
+    if (idx === -1) return null;
+
+    const min = data.daily.temperature_2m_min?.[idx];
+    const max = data.daily.temperature_2m_max?.[idx];
+    const code = data.daily.weathercode?.[idx];
+
+    return {
+      minTemp: typeof min === 'number' ? Math.round(min) : undefined,
+      maxTemp: typeof max === 'number' ? Math.round(max) : undefined,
+      description: weatherCodeToText(code),
+      updatedAt: new Date().toISOString()
+    };
+  } catch (err) {
+    console.warn('Wetter-API fehlgeschlagen', err);
+    return null;
+  }
+}
 
 function ensureParticipants(participants) {
   if (Array.isArray(participants) && participants.length > 0) {
@@ -21,18 +88,38 @@ export async function GET({ locals }) {
 
   try {
     const trips = await getTrips(userId);
-    const normalized = trips.map((trip) => {
+    const normalized = await Promise.all(trips.map(async (trip) => {
       const rawBudget = Number(trip?.budget ?? trip?.totalBudget ?? 0);
       const budget = Number.isFinite(rawBudget) ? rawBudget : 0;
       const normalizedTrip = {
         ...trip,
         budget,
         totalBudget: typeof trip?.totalBudget === 'number' ? trip.totalBudget : undefined,
-        participants: ensureParticipants(trip.participants)
+        participants: ensureParticipants(trip.participants),
+        weatherPreview: trip.weatherPreview ?? null
       };
+      const days = daysUntilTrip(trip?.startDate);
+      const within14Days = days >= 0 && days <= 14;
+      const weatherUpdatedAt = trip?.weatherPreview?.updatedAt
+        ? new Date(trip.weatherPreview.updatedAt).getTime()
+        : 0;
+      const isWeatherStale = Date.now() - weatherUpdatedAt > WEATHER_STALE_MS;
+
+      if (within14Days && (!trip.weatherPreview || isWeatherStale)) {
+        const fresh = await fetchWeatherPreview(
+          trip?.destinationLat ?? trip?.latitude,
+          trip?.destinationLon ?? trip?.longitude,
+          trip?.startDate
+        );
+        if (fresh) {
+          await updateTrip(trip.id, { weatherPreview: fresh }, userId);
+          normalizedTrip.weatherPreview = fresh;
+        }
+      }
+
       console.log('DEBUG Phase3 api/trips trip', normalizedTrip);
       return normalizedTrip;
-    });
+    }));
     console.log('=== RAW API /api/trips OUTPUT ===');
     console.log(JSON.stringify(normalized, null, 2));
     return json(normalized);
@@ -63,14 +150,32 @@ export async function POST({ request, locals }) {
       destinationLat: body.destinationLat,
       destinationLon: body.destinationLon,
       destinationCountry: body.destinationCountry ?? null,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      cityName: body.cityName ?? null,
+      countryName: body.countryName ?? null,
       startDate: body.startDate,
       endDate: body.endDate,
       status: body.status,
       budget: body.budget,
       totalBudget: body.totalBudget,
       currency: body.currency,
-      participants: body.participants
+      participants: body.participants,
+      weatherPreview: null,
+      heroImageUrl: null
     };
+
+    const heroMeta = await fetchHeroImageForDestination({
+      destinationName: payload.destinationName,
+      latitude: payload.latitude ?? payload.destinationLat,
+      longitude: payload.longitude ?? payload.destinationLon,
+      cityName: payload.cityName,
+      countryName: payload.countryName
+    });
+
+    payload.heroImageUrl = heroMeta.heroImageUrl ?? null;
+    payload.cityName = payload.cityName ?? heroMeta.cityName ?? null;
+    payload.countryName = payload.countryName ?? heroMeta.countryName ?? null;
 
     const trip = await createTrip(payload, userId);
     return json({

@@ -35,6 +35,26 @@ export function validateTripPayload(body) {
     }
   }
 
+  if (body.latitude !== undefined) {
+    if (body.latitude !== null && typeof body.latitude !== 'number') {
+      errors.push('latitude muss eine Zahl sein, wenn angegeben');
+    }
+  }
+
+  if (body.longitude !== undefined) {
+    if (body.longitude !== null && typeof body.longitude !== 'number') {
+      errors.push('longitude muss eine Zahl sein, wenn angegeben');
+    }
+  }
+
+  if (body.cityName !== undefined && body.cityName !== null && typeof body.cityName !== 'string') {
+    errors.push('cityName muss ein String sein, wenn angegeben');
+  }
+
+  if (body.countryName !== undefined && body.countryName !== null && typeof body.countryName !== 'string') {
+    errors.push('countryName muss ein String sein, wenn angegeben');
+  }
+
   // Budget
   if (
     body.totalBudget !== undefined &&

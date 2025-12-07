@@ -5,6 +5,7 @@
   let mode = $state<'login' | 'register'>('login');
   let email = $state('');
   let password = $state('');
+  let displayName = $state('');
   let loading = $state(false);
   let error = $state<string | null>(null);
 
@@ -25,7 +26,13 @@
       const res = await fetch(`/api/auth/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password,
+          ...(mode === 'register' && displayName.trim()
+            ? { displayName: displayName.trim() }
+            : {})
+        })
       });
 
       if (!res.ok) {
@@ -99,6 +106,24 @@
           />
         </div>
       </div>
+
+      {#if mode === 'register'}
+        <div class="field-group">
+          <label for="displayName" class="label">Name (optional)</label>
+          <div class="input-wrapper">
+            <Icon name="user" size={18} />
+            <input
+              id="displayName"
+              type="text"
+              bind:value={displayName}
+              maxlength={60}
+              autocomplete="name"
+              placeholder="z.B. Alex"
+            />
+          </div>
+          <p class="hint">Wird für deine Begrüssung genutzt, max. 60 Zeichen.</p>
+        </div>
+      {/if}
 
       <div class="field-group">
         <label for="password" class="label">Passwort</label>
@@ -383,4 +408,4 @@
       font-size: 1.5rem;
     }
   }
-</style>
+  </style>

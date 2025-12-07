@@ -20,6 +20,10 @@ let dbPromise;
 
 // Login
 
+function normalizeEmail(email) {
+  return typeof email === 'string' ? email.trim() : '';
+}
+
 async function usersCollection() {
   const db = await getDb();
   return db.collection('tw_users');
@@ -27,31 +31,50 @@ async function usersCollection() {
 
 export async function getUserByEmail(email) {
   const col = await usersCollection();
-  const doc = await col.findOne({ email });
+  const cleanEmail = normalizeEmail(email);
+  const doc = await col.findOne({ email: cleanEmail || email });
   return doc
     ? {
         id: doc._id.toString(),
         email: doc.email,
         password: doc.password, // spaeter passwordHash
+        displayName: doc.displayName ?? null,
         createdAt: doc.createdAt
       }
     : null;
 }
 
-export async function createUser({ email, password }) {
+export async function getUserById(id) {
+  const col = await usersCollection();
+  const doc = await col.findOne({ _id: new ObjectId(id) });
+  return doc
+    ? {
+        id: doc._id.toString(),
+        email: doc.email,
+        displayName: doc.displayName ?? null,
+        createdAt: doc.createdAt
+      }
+    : null;
+}
+
+export async function createUser({ email, password, displayName }) {
   const col = await usersCollection();
   const now = new Date().toISOString();
 
+  const safeEmail = normalizeEmail(email) || email;
+
   const insertDoc = {
-    email,
+    email: safeEmail,
     password, // fuer echtes Projekt passwordHash nehmen
+    displayName: typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null,
     createdAt: now
   };
 
   const result = await col.insertOne(insertDoc);
   return {
     id: result.insertedId.toString(),
-    email,
+    email: insertDoc.email,
+    displayName: insertDoc.displayName,
     createdAt: now
   };
 }
@@ -133,6 +156,12 @@ function mapTrip(doc) {
       ? Number(doc.destinationLon)
       : undefined,
     destinationCountry: doc.destinationCountry ?? undefined,
+    latitude: doc.latitude != null ? Number(doc.latitude) : undefined,
+    longitude: doc.longitude != null ? Number(doc.longitude) : undefined,
+    cityName: doc.cityName ?? undefined,
+    countryName: doc.countryName ?? undefined,
+    heroImageUrl: doc.heroImageUrl ?? null,
+    weatherPreview: doc.weatherPreview ?? null,
     startDate: doc.startDate || '',
     endDate: doc.endDate || '',
     totalBudget: Number(doc.totalBudget) || 0,
@@ -211,6 +240,22 @@ export async function createTrip(data, userId) {
           ? Number(data.destinationLon)
           : null,
     destinationCountry: data.destinationCountry ?? null,
+    latitude:
+      typeof data.latitude === 'number'
+        ? data.latitude
+        : data.latitude != null
+          ? Number(data.latitude)
+          : null,
+    longitude:
+      typeof data.longitude === 'number'
+        ? data.longitude
+        : data.longitude != null
+          ? Number(data.longitude)
+          : null,
+    cityName: data.cityName ?? null,
+    countryName: data.countryName ?? null,
+    heroImageUrl: data.heroImageUrl ?? null,
+    weatherPreview: data.weatherPreview ?? null,
     startDate: data.startDate || '',
     endDate: data.endDate || '',
     totalBudget: Number(data.totalBudget ?? data.budget ?? 0) || 0,
@@ -271,6 +316,22 @@ export async function updateTrip(id, data, userId) {
     setDoc.destinationCountry = data.destinationCountry;
   }
 
+  if (data.latitude !== undefined) {
+    setDoc.latitude = data.latitude;
+  }
+
+  if (data.longitude !== undefined) {
+    setDoc.longitude = data.longitude;
+  }
+
+  if (data.cityName !== undefined) {
+    setDoc.cityName = data.cityName;
+  }
+
+  if (data.countryName !== undefined) {
+    setDoc.countryName = data.countryName;
+  }
+
   if (data.startDate !== undefined) {
     setDoc.startDate = data.startDate;
   }
@@ -295,6 +356,14 @@ export async function updateTrip(id, data, userId) {
 
   if (data.participants !== undefined) {
     setDoc.participants = normalizeParticipants(data.participants);
+  }
+
+  if (data.heroImageUrl !== undefined) {
+    setDoc.heroImageUrl = data.heroImageUrl;
+  }
+
+  if (data.weatherPreview !== undefined) {
+    setDoc.weatherPreview = data.weatherPreview;
   }
 
   // Update nur, wenn Trip dem User gehoert
@@ -464,6 +533,30 @@ export async function getTripSplitGroups(userId) {
     .find({ userId: new ObjectId(userId) })
     .sort({ createdAt: -1 })
     .toArray();
+  return docs.map(mapTripSplitGroup);
+}
+
+/**
+ * Einzelne TripSplit Gruppe holen (mit User-Check)
+ */
+export async function getTripSplitGroupById(id, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return null;
+  const doc = await col.findOne({
+    _id: new ObjectId(id),
+    userId: new ObjectId(userId)
+  });
+  return mapTripSplitGroup(doc);
+}
+
+/**
+ * Neue TripSplit Gruppe erstellen
+ */
+export async function createTripSplitGroup(data, userId) {
+  const col = await tripSplitGroupsCollection();
+  if (!userId) return null;
+  
+ray();
   return docs.map(mapTripSplitGroup);
 }
 

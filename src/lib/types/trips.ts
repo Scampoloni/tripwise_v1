@@ -28,6 +28,12 @@ export type ApiTrip = {
   destinationLat?: number;
   destinationLon?: number;
   destinationCountry?: string;
+  cityName?: string;
+  countryName?: string;
+  latitude?: number;
+  longitude?: number;
+  heroImageUrl?: string | null;
+  weatherPreview?: WeatherPreview | null;
   startDate: string;
   endDate: string;
   /**
@@ -45,6 +51,13 @@ export type ApiTrip = {
   expenses?: ApiExpense[];
 };
 
+export type WeatherPreview = {
+  minTemp?: number;
+  maxTemp?: number;
+  description?: string;
+  updatedAt?: string;
+} | null;
+
 export type StoreExpense = ApiExpense;
 
 export type StoreTrip = {
@@ -56,6 +69,12 @@ export type StoreTrip = {
   destinationLat?: number;
   destinationLon?: number;
   destinationCountry?: string;
+  cityName?: string;
+  countryName?: string;
+  latitude?: number;
+  longitude?: number;
+  heroImageUrl?: string | null;
+  weatherPreview?: WeatherPreview;
   flag: string;
   startDate: string;
   endDate: string;
@@ -80,6 +99,12 @@ export type TripPayload = {
   destinationLat?: number;
   destinationLon?: number;
   destinationCountry?: string;
+  cityName?: string;
+  countryName?: string;
+  latitude?: number;
+  longitude?: number;
+  heroImageUrl?: string | null;
+  weatherPreview?: WeatherPreview;
   startDate: string;
   endDate: string;
   status?: TripStatus;

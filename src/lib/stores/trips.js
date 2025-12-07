@@ -92,6 +92,15 @@ function mapApiTripToStoreTrip(apiTrip) {
       typeof apiTrip.destinationLon === 'number' ? apiTrip.destinationLon : undefined,
     destinationCountry:
       typeof apiTrip.destinationCountry === 'string' ? apiTrip.destinationCountry : undefined,
+    latitude: typeof apiTrip.latitude === 'number' ? apiTrip.latitude : undefined,
+    longitude: typeof apiTrip.longitude === 'number' ? apiTrip.longitude : undefined,
+    cityName: typeof apiTrip.cityName === 'string' ? apiTrip.cityName : undefined,
+    countryName: typeof apiTrip.countryName === 'string' ? apiTrip.countryName : undefined,
+    heroImageUrl:
+      typeof apiTrip.heroImageUrl === 'string' && apiTrip.heroImageUrl.trim()
+        ? apiTrip.heroImageUrl
+        : null,
+    weatherPreview: apiTrip.weatherPreview ?? null,
     // optionale Flag fuer dein UI
     // @ts-ignore
     flag: apiTrip.flag || '\uD83C\uDF0D',
@@ -202,6 +211,10 @@ export async function addTrip(tripInput) {
       typeof tripInput.destinationLon === 'number' ? tripInput.destinationLon : undefined,
     destinationCountry:
       typeof tripInput.destinationCountry === 'string' ? tripInput.destinationCountry : undefined,
+    latitude: typeof tripInput.latitude === 'number' ? tripInput.latitude : undefined,
+    longitude: typeof tripInput.longitude === 'number' ? tripInput.longitude : undefined,
+    cityName: typeof tripInput.cityName === 'string' ? tripInput.cityName : undefined,
+    countryName: typeof tripInput.countryName === 'string' ? tripInput.countryName : undefined,
     startDate: tripInput.startDate || '',
     endDate: tripInput.endDate || '',
     budget: normalizedBudget,
@@ -232,6 +245,12 @@ export async function addTrip(tripInput) {
  *  destinationLat?: number | null;
  *  destinationLon?: number | null;
  *  destinationCountry?: string | null;
+ *  latitude?: number | null;
+ *  longitude?: number | null;
+ *  cityName?: string | null;
+ *  countryName?: string | null;
+ *  heroImageUrl?: string | null;
+ *  weatherPreview?: unknown;
  *  startDate?: string;
  *  endDate?: string;
  *  budget?: number;
@@ -252,6 +271,12 @@ export async function updateTrip(id, updates) {
   if (updates.destinationLat !== undefined) payload.destinationLat = updates.destinationLat;
   if (updates.destinationLon !== undefined) payload.destinationLon = updates.destinationLon;
   if (updates.destinationCountry !== undefined) payload.destinationCountry = updates.destinationCountry;
+  if (updates.latitude !== undefined) payload.latitude = updates.latitude;
+  if (updates.longitude !== undefined) payload.longitude = updates.longitude;
+  if (updates.cityName !== undefined) payload.cityName = updates.cityName;
+  if (updates.countryName !== undefined) payload.countryName = updates.countryName;
+  if (updates.heroImageUrl !== undefined) payload.heroImageUrl = updates.heroImageUrl;
+  if (updates.weatherPreview !== undefined) payload.weatherPreview = updates.weatherPreview;
   if (updates.startDate !== undefined) payload.startDate = updates.startDate;
   if (updates.endDate !== undefined) payload.endDate = updates.endDate;
   if (updates.budget !== undefined) payload.budget = updates.budget;
