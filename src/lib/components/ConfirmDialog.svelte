@@ -15,21 +15,34 @@
       onCancel();
     }
   }
+
+  function handleBackdropKeydown(event) {
+    const key = event.key;
+    if (key === 'Escape' || key === 'Esc' || key === 'Enter' || key === ' ') {
+      onCancel();
+    }
+  }
 </script>
 
 {#if open}
-  <div class="confirm-backdrop" on:click={handleBackdropClick}>
-    <div class="confirm-dialog">
+  <div
+    class="confirm-backdrop"
+    tabindex="0"
+    role="presentation"
+    onclick={handleBackdropClick}
+    onkeydown={handleBackdropKeydown}
+  >
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-label={title}>
       <h2>{title}</h2>
       {#if message}
         <p>{message}</p>
       {/if}
 
       <div class="buttons">
-        <button class="btn-secondary" type="button" on:click={onCancel}>
+        <button class="btn-secondary" type="button" onclick={onCancel}>
           {cancelLabel}
         </button>
-        <button class="btn-primary" type="button" on:click={onConfirm}>
+        <button class="btn-primary" type="button" onclick={onConfirm}>
           {confirmLabel}
         </button>
       </div>

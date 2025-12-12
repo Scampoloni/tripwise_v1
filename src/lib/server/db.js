@@ -559,30 +559,6 @@ export async function createTripSplitGroup(data, userId) {
   const col = await tripSplitGroupsCollection();
   if (!userId) return null;
   
-ray();
-  return docs.map(mapTripSplitGroup);
-}
-
-/**
- * Einzelne TripSplit Gruppe holen (mit User-Check)
- */
-export async function getTripSplitGroupById(id, userId) {
-  const col = await tripSplitGroupsCollection();
-  if (!userId) return null;
-  const doc = await col.findOne({
-    _id: new ObjectId(id),
-    userId: new ObjectId(userId)
-  });
-  return mapTripSplitGroup(doc);
-}
-
-/**
- * Neue TripSplit Gruppe erstellen
- */
-export async function createTripSplitGroup(data, userId) {
-  const col = await tripSplitGroupsCollection();
-  if (!userId) return null;
-  
   const now = new Date().toISOString();
   const insertDoc = {
     userId: new ObjectId(userId),

@@ -796,17 +796,6 @@
     gap: 0.65rem;
   }
 
-  .page-title-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: color-mix(in oklab, var(--primary-soft-bg) 50%, var(--surface) 50%);
-    color: var(--primary);
-  }
-
   .btn {
     display: inline-flex;
     align-items: center;

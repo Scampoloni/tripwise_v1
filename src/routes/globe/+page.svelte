@@ -270,18 +270,6 @@
     color: var(--text-secondary);
   }
 
-  .page-title-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
-    background: color-mix(in oklab, var(--primary-soft-bg, #e0e7ff) 50%, var(--surface) 50%);
-    color: var(--primary);
-    margin-bottom: 0.5rem;
-  }
-
   @media (max-width: 720px) {
     .page-shell {
       width: 100%;
