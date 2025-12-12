@@ -21,7 +21,11 @@ let dbPromise;
 // Login
 
 function normalizeEmail(email) {
-  return typeof email === 'string' ? email.trim() : '';
+  return typeof email === 'string' ? email.trim().toLowerCase() : '';
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 async function usersCollection() {
@@ -32,7 +36,10 @@ async function usersCollection() {
 export async function getUserByEmail(email) {
   const col = await usersCollection();
   const cleanEmail = normalizeEmail(email);
-  const doc = await col.findOne({ email: cleanEmail || email });
+  const query = cleanEmail
+    ? { email: { $regex: `^${escapeRegex(cleanEmail)}$`, $options: 'i' } }
+    : { email };
+  const doc = await col.findOne(query);
   return doc
     ? {
         id: doc._id.toString(),
@@ -198,10 +205,6 @@ export async function getTrips(userId) {
   const query = userId ? { userId: new ObjectId(userId) } : {};
   const docs = await col.find(query).sort({ createdAt: -1 }).toArray();
   const trips = docs.map(mapTrip);
-  trips.forEach((trip) => {
-    console.log('DEBUG Phase3 db/getTrips trip', trip);
-    console.log('=== RAW DB TRIP ===', trip);
-  });
   return trips;
 }
 

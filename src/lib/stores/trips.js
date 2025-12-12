@@ -147,12 +147,9 @@ export async function loadTrips() {
 
   try {
     const data = /** @type {ApiTrip[]} */ (await fetchJSON('/api/trips'));
-    console.log('DEBUG Phase3 loadTrips response', data);
     const mappedTrips = await Promise.all(
       (data || []).map(async (apiTrip) => {
-        console.log('DEBUG Phase3 loadTrips apiTrip', apiTrip);
         const base = mapApiTripToStoreTrip(apiTrip);
-        console.log('DEBUG Phase3 loadTrips storeTrip base', base);
 
         try {
           const expensesData = /** @type {ApiExpense[]} */ (
@@ -160,23 +157,16 @@ export async function loadTrips() {
           );
           const mappedExpenses = (expensesData || []).map(mapApiExpenseToStoreExpense);
           const withExpenses = { ...base, expenses: mappedExpenses };
-          console.log('DEBUG Phase3 loadTrips storeTrip withExpenses', withExpenses);
           return withExpenses;
         } catch (e) {
           console.warn('Konnte Expenses fuer Trip nicht laden', base.id, e);
           const fallback = { ...base, expenses: [] };
-          console.log('DEBUG Phase3 loadTrips storeTrip fallback', fallback);
           return fallback;
         }
       })
     );
 
     trips.set(mappedTrips);
-    console.log('=== RAW STORE TRIPS AFTER LOAD ===');
-    console.log(JSON.stringify(mappedTrips, null, 2));
-    mappedTrips.forEach((trip) => {
-      console.log('DEBUG Phase3 storeTrip final', trip);
-    });
     return mappedTrips;
   } catch (err) {
     // @ts-ignore

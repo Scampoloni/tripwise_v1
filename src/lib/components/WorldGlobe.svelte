@@ -32,14 +32,43 @@
 
   function buildPointData(list) {
     if (!Array.isArray(list)) return [];
-    return list
-      .filter((t) => Number.isFinite(t?.lat) && Number.isFinite(t?.lon))
-      .map((t) => ({
+
+    const grouped = new Map();
+
+    for (const t of list) {
+      if (!Number.isFinite(t?.lat) || !Number.isFinite(t?.lon)) continue;
+      const key = `${t.lat.toFixed(3)}|${t.lon.toFixed(3)}`;
+      const entry = grouped.get(key) || {
         lat: t.lat,
         lng: t.lon,
-        status: t.status,
-        name: t.destinationName || t.title || 'Unbenannter Trip'
-      }));
+        trips: [],
+        hasActive: false,
+        count: 0
+      };
+
+      entry.trips.push(t);
+      entry.count += 1;
+      entry.hasActive = entry.hasActive || t.status === 'active';
+
+      grouped.set(key, entry);
+    }
+
+    return Array.from(grouped.values()).map((entry) => {
+      const count = entry.trips.length;
+      const topTrip = entry.trips[0];
+      const aggregateStatus = entry.hasActive ? 'active' : 'planned'; // planned & completed both blau
+      return {
+        lat: entry.lat,
+        lng: entry.lng,
+        status: aggregateStatus,
+        name:
+          count > 1
+            ? `${topTrip?.destinationName || topTrip?.title || 'Reise'} (${count}×)`
+            : topTrip?.destinationName || topTrip?.title || 'Unbenannter Trip',
+        trips: entry.trips,
+        count
+      };
+    });
   }
 
   function updatePoints() {
@@ -75,21 +104,48 @@
           .atmosphereAltitude(0.15)
           .showGraticules(true)
           .pointAltitude(0.02)
-          .pointRadius(0.5)
+          .pointRadius((d) => 0.4 + Math.min(0.35, (d.count - 1) * 0.08))
           .pointColor((d) => statusToColor(d.status))
-          .pointLabel((d) => `
-            <div style="
-              background: rgba(15, 23, 42, 0.95);
-              border: 1px solid rgba(51, 65, 85, 0.8);
-              border-radius: 6px;
-              padding: 8px 12px;
-              font-family: system-ui, sans-serif;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            ">
-              <div style="font-weight: 600; color: #e2e8f0; font-size: 14px;">${d.name}</div>
-              <div style="color: ${statusToColor(d.status)}; font-size: 12px; margin-top: 2px;">${statusLabel(d.status)}</div>
-            </div>
-          `)
+          .pointLabel((d) => {
+            const trips = (d.trips || []).slice(0, 5);
+            const more = Math.max(0, (d.trips?.length || 0) - trips.length);
+            const list = trips
+              .map((t) => {
+                const name = t?.name || t?.title || t?.destinationName || 'Trip';
+                const from = t?.startDate ? new Date(t.startDate).toLocaleDateString('de-CH') : '';
+                const to = t?.endDate ? new Date(t.endDate).toLocaleDateString('de-CH') : '';
+                const range = from && to ? `${from} – ${to}` : from || to || '';
+                const label = statusLabel(t.status);
+                const color = statusToColor(t.status);
+                return `<div style="display:flex;gap:6px;align-items:center;">`+
+                  `<span style="color:${color};font-weight:700;">●</span>`+
+                  `<span style="color:#e2e8f0;">${name}</span>`+
+                  (range ? `<span style="color:#94a3b8;">(${range})</span>` : '')+
+                  `<span style="color:${color};font-size:12px;">${label}</span>`+
+                `</div>`;
+              })
+              .join('');
+
+            const moreText = more > 0 ? `<div style="color:#94a3b8;">+${more} weitere</div>` : '';
+
+            return `
+              <div style="
+                background: rgba(15, 23, 42, 0.95);
+                border: 1px solid rgba(51, 65, 85, 0.8);
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-family: system-ui, sans-serif;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                max-width: 240px;
+              ">
+                <div style="font-weight: 700; color: #e2e8f0; font-size: 14px; margin-bottom:4px;">${d.name}</div>
+                <div style="color: ${statusToColor(d.status)}; font-size: 12px; margin-bottom:6px;">
+                  ${statusLabel(d.status)} • ${d.count} Besuch${d.count === 1 ? '' : 'e'}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">${list}${moreText}</div>
+              </div>
+            `;
+          })
           (container);
 
         // Auto-rotate

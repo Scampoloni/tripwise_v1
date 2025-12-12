@@ -4,7 +4,7 @@ import { getUserByEmail } from '$lib/server/db';
 export async function POST({ request, cookies }) {
   try {
     const { email, password } = await request.json();
-    const cleanEmail = typeof email === 'string' ? email.trim() : '';
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     if (!cleanEmail || !password) {
       return json({ error: 'Email und Passwort erforderlich' }, { status: 400 });

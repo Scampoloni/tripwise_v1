@@ -114,14 +114,31 @@ export async function GET({ locals }) {
         if (fresh) {
           await updateTrip(trip.id, { weatherPreview: fresh }, userId);
           normalizedTrip.weatherPreview = fresh;
+        } else if (!trip.weatherPreview) {
+          normalizedTrip.weatherPreview = {
+            description: 'Keine Wetterdaten verfuegbar',
+            updatedAt: new Date().toISOString()
+          };
         }
       }
 
-      console.log('DEBUG Phase3 api/trips trip', normalizedTrip);
+      if (!normalizedTrip.heroImageUrl) {
+        const heroMeta = await fetchHeroImageForDestination({
+          destinationName: normalizedTrip.destinationName,
+          latitude: normalizedTrip.latitude ?? normalizedTrip.destinationLat,
+          longitude: normalizedTrip.longitude ?? normalizedTrip.destinationLon,
+          cityName: normalizedTrip.cityName,
+          countryName: normalizedTrip.countryName
+        });
+
+        if (heroMeta?.heroImageUrl) {
+          normalizedTrip.heroImageUrl = heroMeta.heroImageUrl;
+          await updateTrip(trip.id, { heroImageUrl: heroMeta.heroImageUrl }, userId);
+        }
+      }
+
       return normalizedTrip;
     }));
-    console.log('=== RAW API /api/trips OUTPUT ===');
-    console.log(JSON.stringify(normalized, null, 2));
     return json(normalized);
   } catch (err) {
     console.error('Fehler in GET /api/trips', err);

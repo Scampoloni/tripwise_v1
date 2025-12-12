@@ -1,5 +1,5 @@
 <script>
-  import { theme, themeAuto, toggleTheme } from '$lib/stores/theme.js';
+  import { theme, toggleTheme } from '$lib/stores/theme.js';
   import { resetTrips } from '$lib/stores/trips.js';
   import { resetTripSplit } from '$lib/stores/tripSplit.js';
   import { page } from '$app/stores';
@@ -82,21 +82,6 @@
           {:else}
             <Icon name="sun" size={16} />
           {/if}
-        </button>
-
-        <!-- Subtiler Auto-Switch -->
-        <button
-          type="button"
-          class="auto-switch"
-          role="switch"
-          aria-checked={$themeAuto}
-          aria-label="Auto theme"
-          onclick={() => themeAuto.update(v => !v)}
-        >
-          <span class="auto-label">Auto</span>
-          <span class="auto-track">
-            <span class:auto-thumb-on={$themeAuto} class="auto-thumb"></span>
-          </span>
         </button>
 
         <!-- Logout -->
@@ -203,47 +188,6 @@
     background: var(--secondary-hover);
     transform: scale(1.05);
     color: var(--text);
-  }
-
-  .auto-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    border: none;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    font: inherit;
-    color: var(--text-secondary);
-  }
-
-  .auto-label {
-    font-size: .85rem;
-  }
-
-  .auto-track {
-    position: relative;
-    width: 32px;
-    height: 18px;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--border) 70%, transparent);
-    transition: background .2s;
-  }
-
-  .auto-thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    background: var(--surface-elev, #fff);
-    box-shadow: 0 1px 3px rgba(0,0,0,.18);
-    transition: transform .2s;
-  }
-
-  .auto-thumb-on {
-    transform: translateX(14px);
   }
 
   .pill {

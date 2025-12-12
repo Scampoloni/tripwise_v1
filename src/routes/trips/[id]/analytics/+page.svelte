@@ -1,9 +1,10 @@
 <script>
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { trips } from '$lib/stores/trips.js';
   import { calculateSpent } from '$lib/utils/calculations.js';
   import { page } from '$app/stores';
-  import BackButton from "$lib/components/BackButton.svelte";
+  import BackButton from '$lib/components/BackButton.svelte';
   import Icon from '$lib/components/Icon.svelte';
 
   // Route-Param + Trip aus dem Store holen (Runes)
@@ -83,150 +84,231 @@
 </svelte:head>
 
 {#if !trip}
-  <section class="analytics">
-    <div class="card empty-card">
+  <section class="page-shell" data-animate="fadeUp">
+    <div class="card-surface empty-card">
       <div class="empty-icon">
         <Icon name="bar-chart" size={32} />
       </div>
       <h1>Trip nicht gefunden</h1>
-      <p>Bitte kehre zur Übersicht zurueck.</p>
+      <p>Bitte kehre zur Übersicht zurück.</p>
       <BackButton defaultHref="/" />
     </div>
   </section>
 {:else}
-  <section class="analytics">
-    <h1>{trip.name} – Analytics</h1>
-    <p class="subtitle">
-      {displayDestination} • {trip.startDate} – {trip.endDate}
-    </p>
+  <section class="page-shell" data-animate="fadeUp">
+    <header class="page-header card-surface">
+      <div class="page-headings">
+        <h1>{trip.name} – Analytics</h1>
+        <p class="page-subtitle">{displayDestination} • {trip.startDate} – {trip.endDate}</p>
+      </div>
+      <div class="actions">
+        <button class="pill pill-secondary" type="button" onclick={() => goto(`/trips/${tripId}`)}>
+          <Icon name="arrow-left" size={16} />
+          Zurück zur Reise
+        </button>
+      </div>
+    </header>
 
-    <div class="grid">
-      <!-- Zusammenfassungskarte -->
-      <div class="card summary">
-        <span class="card-label-with-icon">
+    <div class="analytics-grid">
+      <article class="card-surface summary-card">
+        <div class="card-label-with-icon">
           <Icon name="wallet" size={16} />
-          <span class="card-label">Übersicht</span>
-        </span>
+          <span class="card-label">ÜBERSICHT</span>
+        </div>
         <div class="summary-grid">
-          <div>
+          <div class="stat">
             <span class="label">Budget</span>
-            <div class="value">
-              {totalBudget.toFixed(2)} {trip.currency}
-            </div>
+            <span class="value neutral">{totalBudget.toFixed(2)} {trip.currency}</span>
           </div>
-          <div>
+          <div class="stat">
             <span class="label">Spent</span>
-            <div class="value warn">
-              {totalSpent.toFixed(2)} {trip.currency}
-            </div>
+            <span class="value warn">{totalSpent.toFixed(2)} {trip.currency}</span>
           </div>
-          <div>
+          <div class="stat">
             <span class="label">Remaining</span>
-            <div class="value ok">
-              {remaining.toFixed(2)} {trip.currency}
-            </div>
+            <span class="value ok">{remaining.toFixed(2)} {trip.currency}</span>
           </div>
         </div>
-      </div>
+      </article>
 
-      <!-- Balkendiagramm Ausgaben nach Kategorie -->
-      <div class="card tall">
-        <span class="card-label-with-icon">
+      <article class="card-surface chart-card">
+        <div class="card-label-with-icon">
           <Icon name="bar-chart" size={16} />
-          <span class="card-label">Ausgaben nach Kategorie</span>
-        </span>
+          <span class="card-label">AUSGABEN NACH KATEGORIE</span>
+        </div>
 
         {#if hasExpenses}
           <div class="chart-wrap">
             <canvas bind:this={barCanvas}></canvas>
+          </div>
+          <div class="insights">
+            <p class="insight">{totalSpent.toFixed(0)} {trip.currency} ausgegeben – {remaining.toFixed(0)} {trip.currency} verbleibend.</p>
           </div>
         {:else}
           <div class="empty-state">
             <div class="empty-icon small">
               <Icon name="receipt" size={24} />
             </div>
-            <p class="empty">
-              Für diesen Trip wurden noch keine Ausgaben erfasst.
-            </p>
+            <p class="empty">Für diesen Trip wurden noch keine Ausgaben erfasst.</p>
           </div>
         {/if}
-      </div>
+      </article>
     </div>
-
-    <BackButton defaultHref={`/trips/${tripId}`} />
   </section>
 {/if}
 
 <style>
-  .analytics{
-    display:flex;
-    flex-direction:column;
-    gap:1rem;
+  .page-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    width: min(85vw, 1240px);
+    margin: 0 auto 2.4rem;
+    padding: 1.8rem 1.8rem 2.2rem;
+    box-sizing: border-box;
   }
 
-  h1{
-    margin:.25rem 0 0;
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    padding: 1.4rem 1.6rem;
   }
 
-  .subtitle{
-    margin:.15rem 0 1rem;
+  .page-headings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .page-headings h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3vw, 2.25rem);
+    letter-spacing: -0.01em;
+  }
+
+  .page-subtitle {
+    margin: 0;
     color: var(--text-secondary);
-    font-size:.95rem;
+    font-size: 0.98rem;
   }
 
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap:1rem;
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
-  .card{
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
+    color: var(--text);
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .pill:hover {
+    transform: translateY(-1px);
+    background: color-mix(in oklab, var(--primary-soft-bg) 65%, var(--surface) 35%);
+  }
+
+  .card-surface {
     background: var(--surface);
-    border:1px solid var(--border);
-    border-radius:1rem;
-    padding:1rem;
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem 1.6rem;
   }
 
-  .tall .chart-wrap{
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.95rem 1.05rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--surface) 92%, var(--primary-soft-bg) 8%);
+    border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  }
+
+  .label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .value {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .value.neutral {
+    color: var(--text);
+  }
+
+  .value.ok {
+    color: var(--success, #16a34a);
+  }
+
+  .value.warn {
+    color: var(--danger, #ef4444);
+  }
+
+  .chart-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chart-wrap {
+    position: relative;
     height: 360px;
   }
 
-  .chart-wrap{
-    position:relative;
-  }
-
-  .summary-grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap:.75rem;
-    margin-top:.5rem;
-  }
-
-  .label{
-    display:block;
+  .insights {
+    padding: 0.85rem 1rem;
+    border-radius: 0.9rem;
+    background: color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%);
+    border: 1px solid color-mix(in oklab, var(--border) 72%, transparent);
     color: var(--text-secondary);
-    font-size:.8rem;
-    text-transform:uppercase;
-    letter-spacing:.06em;
+    font-size: 0.95rem;
   }
 
-  .value{
-    font-size:1.2rem;
-    font-weight:700;
-  }
-
-  .value.ok{
-    color:#10b981;
-  }
-
-  .value.warn{
-    color:#ef4444;
-  }
-
-  .empty{
+  .empty {
     margin: 0;
     color: var(--text-secondary);
-    font-size:.9rem;
+    font-size: 0.95rem;
   }
 
   .card-label {
@@ -242,7 +324,7 @@
     align-items: center;
     gap: 0.45rem;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
   }
 
   .empty-card {
@@ -251,7 +333,7 @@
     align-items: center;
     text-align: center;
     gap: 0.75rem;
-    padding: 2.5rem 1.5rem;
+    padding: 2.4rem 1.6rem;
   }
 
   .empty-card h1 {
@@ -284,6 +366,40 @@
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
-    padding: 1.5rem;
+    padding: 1.4rem;
+  }
+
+  :global([data-theme='dark']) .card-surface {
+    background: color-mix(in oklab, var(--surface) 90%, var(--surface-soft) 10%);
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  :global([data-theme='dark']) .stat,
+  :global([data-theme='dark']) .insights,
+  :global([data-theme='dark']) .empty-card,
+  :global([data-theme='dark']) .empty-state {
+    background: color-mix(in oklab, var(--surface) 70%, var(--surface-soft) 30%);
+    border-color: color-mix(in oklab, var(--border) 65%, transparent);
+  }
+
+  :global([data-theme='dark']) .insights {
+    color: var(--text-secondary);
+  }
+
+  :global([data-theme='dark']) .pill {
+    background: color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%);
+  }
+
+  @media (max-width: 720px) {
+    .page-shell {
+      width: 100%;
+      padding: 1.4rem 1.1rem 2rem;
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>

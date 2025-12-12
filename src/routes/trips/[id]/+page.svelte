@@ -497,19 +497,23 @@
   <section class="page-shell" data-animate="fadeUp">
     <header class="page-header card-surface">
       <div class="page-headings">
-        <h1>{trip.name}</h1>
-        {#if displayDestination}
-          <p class="page-subtitle">{displayDestination}</p>
-        {/if}
-        {#if dateRange}
-          <p class="page-meta">{dateRange}</p>
-        {/if}
+        <div class="page-headline-row">
+          <div>
+            <h1>{trip.name}</h1>
+            {#if displayDestination}
+              <p class="page-subtitle">{displayDestination}</p>
+            {/if}
+            {#if dateRange}
+              <p class="page-meta">{dateRange}</p>
+            {/if}
+          </div>
+        </div>
       </div>
 
       <div class="actions">
         <button type="button" class="pill pill-secondary" onclick={() => to('/trips')}>
           <Icon name="home" size={16} />
-          Zur Trip Übersicht
+          Übersicht
         </button>
         <button type="button" class="pill pill-secondary" onclick={() => to(`/trips/${trip.id}/analytics`)}>
           <Icon name="bar-chart" size={16} />
@@ -545,14 +549,6 @@
           <div class="summary-item">
             <span class="summary-label">Zeitraum</span>
             <span class="summary-value">{dateRange || '—'}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Budget</span>
-            <span class="summary-value">{totalBudget.toFixed(2)} {tripCurrency}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Ausgaben</span>
-            <span class="summary-value">{expenseCount}</span>
           </div>
         </div>
 
@@ -912,7 +908,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
-    width: min(92vw, 1240px);
+    width: min(85vw, 1240px);
     margin: 0 auto 2.8rem;
     padding: 1.8rem 1.8rem 2.6rem;
     box-sizing: border-box;
@@ -929,7 +925,7 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
     box-shadow: var(--shadow-soft);
-    padding: 1.9rem;
+    padding: 1.8rem;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -941,6 +937,7 @@
     justify-content: space-between;
     gap: 1.4rem;
     flex-wrap: wrap;
+    padding: 1.6rem 1.8rem;
   }
 
   .page-headings {
@@ -949,10 +946,17 @@
     gap: 0.35rem;
   }
 
+  .page-headline-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
   .page-headings h1 {
     margin: 0;
-    font-size: 2.25rem;
-    letter-spacing: 0.16px;
+    font-size: clamp(2rem, 3vw, 2.35rem);
+    letter-spacing: -0.01em;
   }
 
   .page-subtitle,
@@ -976,7 +980,7 @@
   .trip-detail-layout {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-    gap: 1.4rem;
+    gap: 1.6rem;
     align-items: stretch;
   }
 
@@ -1001,7 +1005,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
   }
 
   .split-head {
@@ -1208,7 +1212,7 @@
     gap: 0.4rem;
     padding: 1rem 1.1rem;
     border-radius: 1rem;
-    background: color-mix(in oklab, var(--surface) 92%, var(--primary-soft-bg) 8%);
+    background: color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%);
     border: 1px solid color-mix(in oklab, var(--border) 68%, transparent);
   }
 
@@ -1241,7 +1245,7 @@
     gap: 0.35rem;
     padding: 1rem 1.1rem;
     border-radius: 1rem;
-    background: color-mix(in oklab, var(--surface) 88%, var(--primary-soft-bg) 12%);
+    background: color-mix(in oklab, var(--surface) 92%, var(--primary-soft-bg) 8%);
     border: 1px solid color-mix(in oklab, var(--border) 62%, transparent);
   }
 
@@ -1291,7 +1295,7 @@
     width: 100%;
     height: 12px;
     border-radius: 999px;
-    background: color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%);
+    background: color-mix(in oklab, var(--surface) 82%, var(--primary-soft-bg) 18%);
     border: 1px solid color-mix(in oklab, var(--border) 68%, transparent);
     overflow: hidden;
   }
@@ -1448,9 +1452,9 @@
     padding: 0.9rem 1rem;
     margin-top: 0.25rem;
     border-radius: 0.9rem;
-    border: 1px dashed var(--border);
-    background: transparent;
-    color: var(--text-secondary);
+    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    background: color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%);
+    color: var(--text);
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
@@ -1458,9 +1462,8 @@
   }
 
   .show-more-btn:hover {
-    background: var(--secondary);
-    color: var(--text);
-    border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+    background: color-mix(in oklab, var(--primary-soft-bg) 70%, var(--surface) 30%);
+    border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
   }
 
   .section-subtitle {
@@ -1509,7 +1512,7 @@
     border-radius: 1.1rem;
     border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
     background: color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--shadow-soft);
   }
 
   .expense-meta {
@@ -1750,6 +1753,13 @@
     background: color-mix(in oklab, var(--surface) 70%, var(--primary-soft-bg) 30%);
   }
 
+  :global([data-theme='dark']) .pill-cta {
+    background: var(--primary);
+    color: var(--primary-contrast, #fff);
+    border-color: transparent;
+    box-shadow: 0 12px 28px color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+
   @media (max-width: 1080px) {
     .trip-detail-layout {
       grid-template-columns: 1fr;
@@ -1766,6 +1776,11 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 1.1rem;
+    }
+
+    .page-headline-row {
+      flex-direction: column;
+      align-items: flex-start;
     }
 
     .actions {
