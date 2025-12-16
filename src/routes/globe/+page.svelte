@@ -89,6 +89,25 @@
       </span>
       <h2>Trips mit Koordinaten</h2>
       <p>Visualisiert geplante, aktive und abgeschlossene Ziele</p>
+
+      <div class="globe-legend" aria-label="Legende">
+        <div class="legend-item legend-active">
+          <span class="legend-dot" aria-hidden="true"></span>
+          <span>Aktiv</span>
+        </div>
+        <div class="legend-item legend-planned">
+          <span class="legend-dot" aria-hidden="true"></span>
+          <span>Geplant</span>
+        </div>
+        <div class="legend-item legend-completed">
+          <span class="legend-dot" aria-hidden="true"></span>
+          <span>Abgeschlossen</span>
+        </div>
+        <div class="legend-item legend-mixed">
+          <span class="legend-dot" aria-hidden="true"></span>
+          <span>Gemischt</span>
+        </div>
+      </div>
     </div>
     {#if isLoading}
       <div class="globe-loading">
@@ -241,6 +260,56 @@
   .globe-header p {
     margin: 0.1rem 0 0;
     color: var(--text-secondary);
+  }
+
+  .globe-legend {
+    margin-top: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.95rem;
+    border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+    background: color-mix(in oklab, var(--surface) 88%, var(--secondary) 12%);
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+    white-space: nowrap;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--surface) 65%, transparent);
+  }
+
+  .legend-active .legend-dot {
+    background: var(--success);
+  }
+
+  .legend-completed .legend-dot {
+    background: var(--warning);
+  }
+
+  .legend-planned .legend-dot {
+    background: color-mix(in oklab, var(--primary-hover) 75%, var(--text) 25%);
+  }
+
+  .legend-mixed .legend-dot {
+    background: color-mix(in oklab, var(--primary-hover) 55%, var(--warning) 45%);
   }
 
   .pill {
