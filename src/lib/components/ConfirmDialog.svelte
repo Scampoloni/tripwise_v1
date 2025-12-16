@@ -9,30 +9,33 @@
     onCancel = () => {}
   } = $props();
 
+  let dialogEl = $state(null);
+
   function handleBackdropClick(event) {
-    // Nur schliessen, wenn wirklich auf den Hintergrund geklickt wird
-    if (event.target === event.currentTarget) {
+    // Dialog ist fullscreen; Klick ausserhalb des Panels trifft den dialog selbst
+    if (event.target === dialogEl) {
       onCancel();
     }
   }
 
-  function handleBackdropKeydown(event) {
-    const key = event.key;
-    if (key === 'Escape' || key === 'Esc' || key === 'Enter' || key === ' ') {
-      onCancel();
-    }
+  function handleCancel(event) {
+    // Native ESC -> cancel event
+    event.preventDefault();
+    onCancel();
   }
 </script>
 
 {#if open}
-  <div
-    class="confirm-backdrop"
-    tabindex="0"
-    role="presentation"
+  <dialog
+    class="confirm-dialog"
+    open
+    bind:this={dialogEl}
+    aria-label={title}
+    aria-modal="true"
     onclick={handleBackdropClick}
-    onkeydown={handleBackdropKeydown}
+    oncancel={handleCancel}
   >
-    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-label={title}>
+    <div class="confirm-panel">
       <h2>{title}</h2>
       {#if message}
         <p>{message}</p>
@@ -47,22 +50,31 @@
         </button>
       </div>
     </div>
-  </div>
+  </dialog>
 {/if}
 
 <style>
-  .confirm-backdrop {
+  .confirm-dialog {
     position: fixed;
     inset: 0;
-    background: rgba(10, 10, 20, 0.55);
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 40;
+  }
+
+  .confirm-dialog::backdrop {
+    background: rgba(10, 10, 20, 0.55);
     animation: fadeIn 0.18s ease-out;
   }
 
-  .confirm-dialog {
+  .confirm-panel {
     background: var(--surface, #141821);
     color: var(--text, #f5f5f5);
     border-radius: 1.25rem;
@@ -73,12 +85,12 @@
     animation: popIn 0.18s ease-out;
   }
 
-  .confirm-dialog h2 {
+  .confirm-panel h2 {
     font-size: 1.1rem;
     margin: 0 0 0.5rem;
   }
 
-  .confirm-dialog p {
+  .confirm-panel p {
     margin: 0 0 1.2rem;
     opacity: 0.85;
     font-size: 0.95rem;

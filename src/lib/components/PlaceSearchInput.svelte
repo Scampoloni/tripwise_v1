@@ -1,9 +1,16 @@
+<script context="module">
+  let placeSearchInputIdCounter = 0;
+</script>
+
 <script>
   // Props
   export let label = 'Reiseziel';
   export let placeholder = 'Stadt oder Ort eingeben';
   export let initialValueName = '';
   export let onSelect = () => {};
+
+  // Stable unique id across SSR+client hydration (depends on render order)
+  const inputId = `place-search-input-${++placeSearchInputIdCounter}`;
 
   let query = initialValueName || '';
   let results = [];
@@ -140,12 +147,13 @@
 
 <div class="place-input">
   {#if label}
-    <label class="place-input__label">{label}</label>
+    <label class="place-input__label" for={inputId}>{label}</label>
   {/if}
 
   <div class="place-input__field-wrapper">
     <input
       class="place-input__field"
+      id={inputId}
       type="text"
       bind:value={query}
       placeholder={placeholder}
