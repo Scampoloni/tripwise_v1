@@ -38,10 +38,19 @@ async function fetchHeroImageForDestination(input) {
       resolvedCountry = geo.country ?? resolvedCountry;
     }
   }
-  if (!UNSPLASH_KEY) {
-    return { heroImageUrl: null, cityName: resolvedCity, countryName: resolvedCountry };
-  }
   const query = resolvedCity && resolvedCountry ? `${resolvedCity} ${resolvedCountry} city skyline` : destinationName?.trim() ? `${destinationName} skyline` : "travel landscape";
+  if (!UNSPLASH_KEY) {
+    const sourceUrl = `https://source.unsplash.com/1600x900/?${encodeURIComponent(query)}`;
+    try {
+      const res = await fetch(sourceUrl, { method: "HEAD", redirect: "follow" });
+      if (res && res.ok && typeof res.url === "string" && res.url.trim()) {
+        return { heroImageUrl: res.url, cityName: resolvedCity, countryName: resolvedCountry };
+      }
+    } catch (err) {
+      console.warn("Unsplash source fallback fehlgeschlagen", err);
+    }
+    return { heroImageUrl: sourceUrl, cityName: resolvedCity, countryName: resolvedCountry };
+  }
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&orientation=landscape&per_page=1&content_filter=high`,

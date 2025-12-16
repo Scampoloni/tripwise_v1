@@ -604,6 +604,39 @@
       gap: 1.1rem;
     }
 
+    .triplist-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.9rem;
+    }
+
+    .pill-group {
+      width: 100%;
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding: 0.2rem 0.25rem;
+      gap: 0.35rem;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .pill-toggle {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      padding: 0.55rem 1rem;
+    }
+
+    .search {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .trip-list-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
     .trip-list-items {
       gap: 1rem;
     }
@@ -621,6 +654,29 @@
 
     .empty-card {
       padding: 2.2rem 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-shell {
+      padding: 1.2rem 1rem 2rem;
+    }
+
+    .card-surface {
+      padding: 1.25rem;
+    }
+
+    .pill-toggle {
+      padding: 0.5rem 0.95rem;
+      font-size: 0.88rem;
+    }
+
+    .search input {
+      font-size: 0.9rem;
+    }
+
+    .show-more-btn {
+      font-size: 0.9rem;
     }
   }
 </style>

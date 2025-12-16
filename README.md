@@ -252,11 +252,11 @@ src/
 ---
 
 ## 8. Anhang
-- **Figma-Prototyp:** [TripWise Travel Budget Planner](https://www.figma.com/make/FqHsBYPB8soomCpC2osJ5n/TripWise-Travel-Budget-Planner?node-id=0-1&p=f&t=mgzaNv9wKOFiUdCC-0&full)
+- **Figma-Mockup:** [TripWise Travel Budget Planner](https://www.figma.com/make/FqHsBYPB8soomCpC2osJ5n/TripWise-Travel-Budget-Planner?node-id=0-1&p=f&t=mgzaNv9wKOFiUdCC-0&full)
 - **Testskript & Beobachtungen:** TODO – nach Validierungsphase ergänzen (`/evaluation` Ordner).
 - **Rohdaten (Interviews/Tests):** TODO – CSV/Notizen ablegen.
 - **Screenshots & Skizzen:** TODO – Crazy-8, Wireframes und UI-Screenshots bündeln.
-- **Deployment-Link:** TODO – finale Netlify/Vercel-URL eintragen.
+- **Deployment-Link:** [TripWise Travel Budget Planner](https://tripwisev3.netlify.app/login).
 
 <!--
 Update durch Copilot, Datum: 2025 12 03

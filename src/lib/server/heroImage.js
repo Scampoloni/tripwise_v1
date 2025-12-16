@@ -5,6 +5,8 @@ import { reverseGeocode } from './reverseGeocoding';
  * Hero-Bild fuer einen Trip holen. Nutzt (lat, lon) fuer Reverse Geocoding,
  * um City/Country in die Unsplash Query zu legen. Fallback: destinationName oder generischer String.
  * Erwartet UNSPLASH_ACCESS_KEY in den Private Env Vars.
+ * Falls der Key fehlt (z.B. in Deployments ohne gesetzte Env Vars), wird als Fallback
+ * die unsplash "source" URL genutzt, die keinen Key benoetigt.
  * @param {{ destinationName?: string | null; latitude?: number | null; longitude?: number | null; cityName?: string | null; countryName?: string | null }} input
  * @returns {Promise<{ heroImageUrl: string | null; cityName?: string; countryName?: string }>}
  */
@@ -23,15 +25,26 @@ export async function fetchHeroImageForDestination(input) {
     }
   }
 
-  if (!UNSPLASH_KEY) {
-    return { heroImageUrl: null, cityName: resolvedCity, countryName: resolvedCountry };
-  }
-
   const query = resolvedCity && resolvedCountry
     ? `${resolvedCity} ${resolvedCountry} city skyline`
     : destinationName?.trim()
       ? `${destinationName} skyline`
       : 'travel landscape';
+
+  // Fallback ohne API Key: Unsplash Source (redirectet auf ein Bild)
+  if (!UNSPLASH_KEY) {
+    const sourceUrl = `https://source.unsplash.com/1600x900/?${encodeURIComponent(query)}`;
+    try {
+      // HEAD vermeidet, dass wir Bilddaten durch die Function ziehen.
+      const res = await fetch(sourceUrl, { method: 'HEAD', redirect: 'follow' });
+      if (res && res.ok && typeof res.url === 'string' && res.url.trim()) {
+        return { heroImageUrl: res.url, cityName: resolvedCity, countryName: resolvedCountry };
+      }
+    } catch (err) {
+      console.warn('Unsplash source fallback fehlgeschlagen', err);
+    }
+    return { heroImageUrl: sourceUrl, cityName: resolvedCity, countryName: resolvedCountry };
+  }
 
   try {
     const res = await fetch(

@@ -327,4 +327,68 @@
       padding: 0.9rem;
     }
   }
+
+  /* Touch-friendly and narrow screens */
+  @media (hover: none) {
+    .delete-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .trip-card {
+      padding: 0.85rem 0.9rem;
+    }
+
+    .trip-inner {
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .trip-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .trip-title-block h3 {
+      font-size: 1rem;
+    }
+
+    .trip-destination {
+      font-size: 0.85rem;
+    }
+
+    .trip-percentage {
+      font-size: 0.95rem;
+      padding: 0.1rem 0.35rem;
+      background: color-mix(in oklab, var(--primary-soft-bg) 40%, transparent);
+      border-radius: 999px;
+    }
+
+    .budget-bar {
+      margin-bottom: 0.5rem;
+      height: 0.32rem;
+    }
+
+    .trip-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+      font-size: 0.82rem;
+    }
+
+    .budget-info {
+      gap: 0.2rem;
+    }
+
+    .total {
+      font-size: 0.9rem;
+    }
+
+    .trip-avatar {
+      width: 44px;
+    }
+  }
 </style>
