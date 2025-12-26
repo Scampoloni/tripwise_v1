@@ -1,0 +1,41 @@
+flowchart TD
+    Start([App Start]) --> Auth{Authenticated?}
+    Auth -->|No| Login[Login]
+    Login --> Dashboard
+    Auth -->|Yes| Dashboard[Dashboard]
+    
+    Dashboard -->|Empty State| NewTrip[Trip erstellen]
+    Dashboard -->|Trip vorhanden| TripList[Trip-Liste]
+    
+    TripList --> TripDetail[Trip Detail]
+    Dashboard --> Converter[Währungsrechner]
+    Dashboard --> Globe[Weltkarte]
+    Dashboard --> Analytics[Gesamt-Analytics]
+    Dashboard --> TripSplit[TripSplit Beta]
+    
+    NewTrip -->|Formular ausfüllen| TripSaved[Trip gespeichert]
+    TripSaved --> TripDetail
+    
+    TripDetail --> Overview[Übersicht]
+    TripDetail --> TripAnalytics[Trip Analytics]
+    TripDetail --> AddExpense[Ausgabe hinzufügen]
+    
+    AddExpense -->|Modal/Formular| ExpenseSaved[Ausgabe gespeichert]
+    ExpenseSaved --> TripDetail
+    
+    Overview --> EditTrip[Trip bearbeiten]
+    EditTrip --> TripDetail
+    
+    TripList --> NewTrip
+    
+    TripSplit --> CreateGroup[Gruppe erstellen]
+    CreateGroup --> AddParticipants[Teilnehmer hinzufügen]
+    AddParticipants --> AddGroupExpenses[Ausgaben erfassen]
+    AddGroupExpenses --> ViewBalances[Salden & Settlement]
+    ViewBalances --> TripSplit
+    
+    Converter --> Dashboard
+    Globe --> Dashboard
+    Analytics --> Dashboard
+    TripAnalytics --> TripDetail
+    TripSplit --> Dashboard

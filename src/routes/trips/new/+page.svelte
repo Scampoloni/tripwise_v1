@@ -184,29 +184,27 @@
           </span>
 
           <div class="field">
-            <label for="trip-budget">Gesamtbudget</label>
-            <div class="input-with-prefix">
-              <span class="prefix">{currency}</span>
+            <label for="trip-budget">Budget & Währung</label>
+            <div class="input-group-combined">
               <input
                 id="trip-budget"
-                class="input"
+                class="input-main"
                 inputmode="decimal"
-                placeholder="z. B. 2 000"
+                placeholder="0.00"
                 bind:value={budgetStr}
               />
+              <div class="currency-select-wrapper">
+                <select id="trip-currency" class="currency-select" bind:value={currency}>
+                  {#each currencies as c}
+                    <option value={c}>{c}</option>
+                  {/each}
+                </select>
+                <div class="select-icon"><Icon name="chevron-down" size={14} /></div>
+              </div>
             </div>
             {#if parseBudget(budgetStr) === null}
               <p class="field-hint warn">Bitte einen gültigen Betrag eingeben.</p>
             {/if}
-          </div>
-
-          <div class="field">
-            <label for="trip-currency">Währung</label>
-            <select id="trip-currency" class="input select" bind:value={currency}>
-              {#each currencies as c}
-                <option value={c}>{c}</option>
-              {/each}
-            </select>
           </div>
 
           <div class="field">
@@ -315,9 +313,9 @@
 
 <style>
   .page-shell {
-    max-width: 1100px;
-    margin: 0 auto 2.8rem;
-    padding: 1.8rem 1.8rem 2.8rem;
+    width: 100%;
+    margin-bottom: 2.8rem;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
@@ -325,8 +323,10 @@
 
   .page-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    text-align: center;
     gap: 1rem;
     flex-wrap: wrap;
     padding: 1.6rem 2rem;
@@ -336,6 +336,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    align-items: center;
+    text-align: center;
   }
 
   .page-headings h1 {
@@ -801,5 +803,83 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
+  }
+
+  /* Combined Input Group */
+  .input-group-combined {
+    display: flex;
+    align-items: center;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    background: color-mix(in oklab, var(--surface) 94%, var(--secondary) 6%);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    overflow: hidden;
+  }
+
+  .input-group-combined:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 28%, transparent);
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
+  }
+
+  .input-main {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .input-main:focus {
+    outline: none;
+  }
+
+  .currency-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    background: color-mix(in oklab, var(--surface) 88%, var(--primary-soft-bg) 12%);
+    height: 100%;
+  }
+
+  .currency-select {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 2.2rem 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    height: 100%;
+  }
+
+  /* 
+     Fix für Darkmode-Kontrast:
+     Wir erzwingen für die Dropdown-Liste (Options) ein helles Theme (schwarzer Text auf weißem Grund).
+     Das garantiert Lesbarkeit unabhängig vom Browser-Hover-Verhalten.
+     Das geschlossene Feld bleibt dunkel (durch .currency-select color: var(--text)).
+  */
+  :global([data-theme='dark']) .currency-select option {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  .select-icon {
+    position: absolute;
+    right: 0.8rem;
+    pointer-events: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+  }
+
+  :global([data-theme='dark']) .input-group-combined {
+    background: color-mix(in oklab, var(--surface) 65%, var(--surface-soft) 35%);
+    border-color: color-mix(in oklab, var(--border) 65%, transparent);
   }
 </style>

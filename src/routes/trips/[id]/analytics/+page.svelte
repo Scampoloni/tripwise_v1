@@ -162,25 +162,30 @@
     display: flex;
     flex-direction: column;
     gap: 1.6rem;
-    width: min(85vw, 1240px);
-    margin: 0 auto 2.4rem;
-    padding: 1.8rem 1.8rem 2.2rem;
+    width: 100%;
+    margin-bottom: 2.4rem;
+    padding: 0;
     box-sizing: border-box;
   }
 
   .page-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 1.1rem;
     flex-wrap: wrap;
     padding: 1.4rem 1.6rem;
+    text-align: center;
   }
 
   .page-headings {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    align-items: center;
+    text-align: center;
+    width: 100%;
   }
 
   .page-headings h1 {
@@ -200,6 +205,7 @@
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .pill {
@@ -399,7 +405,7 @@
 
     .page-header {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
     }
   }
 </style>

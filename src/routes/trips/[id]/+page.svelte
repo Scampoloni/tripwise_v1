@@ -519,10 +519,6 @@
           <Icon name="bar-chart" size={16} />
           Analytics
         </button>
-        <button type="button" class="pill pill-cta" onclick={openAddModal}>
-          <Icon name="plus" size={16} />
-          Ausgabe erfassen
-        </button>
       </div>
     </header>
 
@@ -565,6 +561,10 @@
                   : 'Erfasse deine erste Ausgabe, um dein Budget im Blick zu behalten.'}
               </p>
             </div>
+            <button type="button" class="pill pill-cta" onclick={openAddModal}>
+              <Icon name="plus" size={16} />
+              Ausgabe erfassen
+            </button>
           </div>
 
           {#if !hasExpenses}
@@ -908,9 +908,9 @@
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
-    width: min(85vw, 1240px);
-    margin: 0 auto 2.8rem;
-    padding: 1.8rem 1.8rem 2.6rem;
+    width: 100%;
+    margin-bottom: 2.8rem;
+    padding: 0;
     box-sizing: border-box;
   }
 
@@ -933,8 +933,10 @@
 
   .page-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    text-align: center;
     gap: 1.4rem;
     flex-wrap: wrap;
     padding: 1.6rem 1.8rem;
@@ -944,13 +946,17 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    align-items: center;
+    text-align: center;
   }
 
   .page-headline-row {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 1rem;
+    text-align: center;
   }
 
   .page-headings h1 {
@@ -974,7 +980,7 @@
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .trip-detail-layout {
@@ -1434,10 +1440,19 @@
 
   .expenses-head {
     display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: center;
     gap: 1rem;
-    flex-wrap: wrap;
+  }
+
+  .expenses-head > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .expenses-head > button {
+    flex-shrink: 0;
   }
 
   .expenses-actions {
@@ -1585,6 +1600,12 @@
 
   .pill-cta:hover {
     background: var(--primary-hover, #2563eb);
+  }
+
+  .pill-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 0.7rem;
   }
 
   .pill-secondary {

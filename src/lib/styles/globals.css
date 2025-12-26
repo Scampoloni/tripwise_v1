@@ -4,7 +4,7 @@
 
 /* -------- Global Base / Reset -------- */
 :root {
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
   font-size: 16px;
 }
 *,

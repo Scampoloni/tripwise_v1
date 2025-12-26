@@ -20,10 +20,11 @@
   let hasSearched = false;
 
   let debounceTimer;
+  let lastInitialValue = initialValueName;
 
-  $: if (initialValueName && !query) {
-    // Falls das Formular einen initialen Wert setzt
+  $: if (initialValueName !== lastInitialValue) {
     query = initialValueName;
+    lastInitialValue = initialValueName;
   }
 
   function handleInput(event) {
@@ -179,7 +180,7 @@
           <button
             type="button"
             class="place-input__item"
-            on:click={() => handleSelect(place)}
+            on:mousedown|preventDefault={() => handleSelect(place)}
           >
             <div class="place-input__item-name">{place.name}</div>
             {#if place.country}
@@ -201,8 +202,10 @@
   }
 
   .place-input__label {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: color-mix(in oklab, var(--text) 78%, var(--text-secondary) 22%);
+    margin-bottom: 0.25rem;
   }
 
   .place-input__field-wrapper {
@@ -211,25 +214,34 @@
 
   .place-input__field {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.8);
-    font-size: 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+    background: color-mix(in oklab, var(--surface) 94%, var(--secondary) 6%);
+    color: var(--text);
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     outline: none;
   }
 
+  .place-input__field:hover {
+    border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
+  }
+
   .place-input__field:focus {
-    border-color: rgba(59, 130, 246, 0.9);
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 28%, transparent);
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
   }
 
   .place-input__status {
     position: absolute;
-    right: 0.5rem;
+    right: 0.9rem;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    pointer-events: none;
   }
 
   .place-input__dropdown {
@@ -238,11 +250,11 @@
     top: 100%;
     left: 0;
     right: 0;
-    margin-top: 0.25rem;
-    background: #ffffff;
-    border-radius: 0.75rem;
-    border: 1px solid rgba(148, 163, 184, 0.5);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+    margin-top: 0.4rem;
+    background: var(--surface);
+    border-radius: 1rem;
+    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    box-shadow: var(--shadow-elevated);
     overflow: hidden;
     max-height: 260px;
     display: flex;
@@ -251,30 +263,54 @@
 
   .place-input__item {
     text-align: left;
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     border: none;
     background: transparent;
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+    transition: background 0.15s;
+  }
+
+  .place-input__item:last-child {
+    border-bottom: none;
   }
 
   .place-input__item:hover {
-    background: #f3f4f6;
+    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
   }
 
   .place-input__item-name {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
   }
 
   .place-input__item-sub {
-    font-size: 0.75rem,
-    color: #6b7280,
+    font-size: 0.8rem;
+    color: var(--text-secondary);
   }
 
   .place-input__empty {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    color: #6b7280;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  :global([data-theme='dark']) .place-input__field {
+    background: color-mix(in oklab, var(--surface) 65%, var(--surface-soft) 35%);
+    border-color: color-mix(in oklab, var(--border) 65%, transparent);
+  }
+
+  :global([data-theme='dark']) .place-input__dropdown {
+    background: color-mix(in oklab, var(--surface) 88%, var(--surface-soft) 12%);
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+
+  :global([data-theme='dark']) .place-input__item:hover {
+    background: color-mix(in oklab, var(--surface) 75%, var(--primary-soft-bg) 25%);
   }
 </style>

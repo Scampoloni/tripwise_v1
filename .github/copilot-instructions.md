@@ -36,6 +36,4 @@
 - Globe lädt Punkte nach Refresh; Converter hat Fallback wenn Rates-Proxy ausfällt
 - Layout hält auf 320px+
 
-## 7) Modell
-- Verwende GPT-5.1-Codex-Max (Preview)
-- Daten in Svelte Stores  
+

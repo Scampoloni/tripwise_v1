@@ -315,6 +315,7 @@
     </div>
   </header>
 
+  {#if allTrips.length > 0}
   <div class="stats-layout">
     <div class="primary-row">
       <article class="overview-card card-surface">
@@ -493,6 +494,20 @@
       </article>
     </div>
   </div>
+  {:else}
+    <div class="empty-dashboard card-surface">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <Icon name="map" size={48} />
+        </div>
+        <h2>Noch keine Reisen geplant</h2>
+        <p>Erstelle deinen ersten Trip, um Budget und Ausgaben im Blick zu behalten.</p>
+        <button class="pill pill-cta" type="button" onclick={() => goto('/trips/new')}>
+          <Icon name="plus" size={18} /> Trip erstellen
+        </button>
+      </div>
+    </div>
+  {/if}
 
   <!-- Live Budget Modal -->
   <LiveBudgetModal
@@ -506,16 +521,59 @@
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
-    width: min(85vw, 1240px);
-    margin: 0 auto 2.8rem;
-    padding: 1.8rem 1.8rem 2.6rem;
+    width: 100%;
+    margin-bottom: 2.8rem;
+    padding: 0;
     box-sizing: border-box;
+  }
+
+  .empty-dashboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    background: linear-gradient(145deg,
+        color-mix(in oklab, var(--surface) 95%, var(--primary-soft-bg) 5%),
+        color-mix(in oklab, var(--surface) 90%, transparent)
+      );
+  }
+
+  .empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 400px;
+    padding: 2rem;
+  }
+
+  .empty-icon {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    padding: 1rem;
+    background: color-mix(in oklab, var(--primary) 10%, transparent);
+    border-radius: 50%;
+  }
+
+  .empty-dashboard h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .empty-dashboard p {
+    margin: 0 0 1.5rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
   }
 
   .page-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 1.2rem;
     flex-wrap: wrap;
     padding: 1.6rem 2rem;
@@ -523,6 +581,7 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
     box-shadow: var(--shadow-soft);
+    text-align: center;
   }
 
   .page-headings {
@@ -531,7 +590,7 @@
     gap: 0.35rem;
     align-items: center;
     text-align: center;
-    flex: 1;
+    width: 100%;
   }
 
   .page-headings h1 {
@@ -551,7 +610,7 @@
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .pill {
@@ -1191,563 +1250,12 @@
 
     .page-header {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 1.1rem;
     }
 
     .actions {
-      justify-content: flex-start;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .card-surface {
-      padding: 1.3rem;
-      border-radius: 1rem;
-    }
-
-    .overview-title {
-      font-size: 1.45rem;
-    }
-
-    .totals-value {
-      font-size: 1.7rem;
-
-  }
-
-  .page-headings {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .page-headings h1 {
-    margin: 0;
-    font-size: clamp(2rem, 4vw, 2.4rem);
-    letter-spacing: -0.01em;
-  }
-
-  .page-subtitle {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 1rem;
-  }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.72rem 1.45rem;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-    transition:
-      background 0.2s,
-      color 0.2s,
-      transform 0.15s,
-      box-shadow 0.2s,
-      border-color 0.2s;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .pill-cta {
-    background: var(--primary);
-    color: var(--primary-contrast);
-    border: 1px solid color-mix(in oklab, var(--primary) 45%, transparent);
-    box-shadow: 0 20px 38px color-mix(in oklab, var(--primary) 24%, transparent);
-  }
-  .pill-cta:hover {
-    transform: translateY(-1px);
-    background: var(--primary-hover);
-  }
-
-  .pill-secondary {
-    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
-    color: var(--text);
-    border-color: color-mix(in oklab, var(--border) 80%, transparent);
-    box-shadow: 0 14px 30px color-mix(in oklab, #0f172a 14%, transparent);
-  }
-  .pill-secondary:hover {
-    background: color-mix(in oklab, var(--surface) 90%, var(--primary-soft-bg) 10%);
-    transform: translateY(-1px);
-  }
-
-  .pill-ghost {
-    background: transparent;
-    border-color: color-mix(in oklab, var(--primary) 45%, transparent);
-    color: var(--primary);
-    box-shadow: none;
-  }
-  .pill-ghost:hover {
-    background: color-mix(in oklab, var(--primary-soft-bg) 55%, transparent);
-  }
-
-  :global([data-theme='dark']) .pill-secondary {
-    background: color-mix(in oklab, var(--surface) 70%, var(--primary-soft-bg) 30%);
-    border-color: color-mix(in oklab, var(--text) 18%, transparent);
-    color: var(--text);
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
-  }
-
-  :global([data-theme='dark']) .pill-secondary:hover {
-    background: color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%);
-  }
-
-  :global([data-theme='dark']) .pill-ghost {
-    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
-    color: color-mix(in oklab, var(--primary) 70%, var(--text));
-  }
-
-  :global([data-theme='dark']) .pill-ghost:hover {
-    background: color-mix(in oklab, var(--primary-soft-bg) 70%, transparent);
-  }
-
-  .stats-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 1.75rem;
-  }
-
-  .primary-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.5rem;
-  }
-
-  .secondary-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .card-surface {
-    position: relative;
-    background: var(--surface);
-    border-radius: var(--radius-card);
-    border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
-    box-shadow: var(--shadow-soft);
-    padding: 1.9rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.35rem;
-  }
-
-  .overview-card {
-    overflow: hidden;
-    background: linear-gradient(145deg,
-        color-mix(in oklab, var(--surface) 90%, var(--primary) 10%),
-        color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%)
-      );
-    border: 1px solid color-mix(in oklab, var(--primary) 24%, var(--border));
-    box-shadow: var(--shadow-elevated);
-  }
-
-  .overview-card::after {
-    content: '';
-    position: absolute;
-    inset: -30% 30% 35% -30%;
-    background: radial-gradient(circle at top right,
-        color-mix(in oklab, var(--primary) 35%, transparent) 0%,
-        transparent 60%
-      );
-    opacity: 0.45;
-    pointer-events: none;
-  }
-
-  .overview-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .overview-pill {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.45rem;
-  }
-
-  .overview-percent {
-    font-size: 2.35rem;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1;
-  }
-
-  .overview-title {
-    margin: 0.35rem 0 0;
-    font-size: 1.65rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .overview-subtitle {
-    margin: 0.35rem 0 0;
-    color: color-mix(in oklab, var(--text-secondary) 88%, transparent);
-    font-size: 1rem;
-    max-width: 28rem;
-  }
-
-  .card-label {
-    display: inline-block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-  }
-
-  .card-label-with-icon {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-secondary);
-  }
-
-  .card-label-with-icon .card-label {
-    color: inherit;
-  }
-
-  .status-badge {
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    border: 1px solid transparent;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-  }
-
-  .status-badge.status-plan {
-    background: color-mix(in oklab, var(--surface) 78%, var(--success) 22%);
-    color: color-mix(in oklab, var(--success) 55%, var(--text));
-    border-color: color-mix(in oklab, var(--success) 42%, transparent);
-  }
-
-  .status-badge.status-warning {
-    background: color-mix(in oklab, var(--surface) 70%, var(--warning) 30%);
-    color: color-mix(in oklab, var(--warning) 60%, var(--text));
-    border-color: color-mix(in oklab, var(--warning) 45%, transparent);
-  }
-
-  .status-badge.status-over {
-    background: color-mix(in oklab, var(--surface) 68%, var(--danger) 32%);
-    color: color-mix(in oklab, var(--danger) 65%, var(--text));
-    border-color: color-mix(in oklab, var(--danger) 48%, transparent);
-  }
-
-  .overview-progress {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .progress-header {
-    font-size: 0.93rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: color-mix(in oklab, var(--text) 68%, var(--text-secondary) 32%);
-    font-weight: 600;
-  }
-
-  .progress-track {
-    height: 1rem;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--surface) 78%, var(--primary-soft-bg) 22%);
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: color-mix(in oklab, var(--primary) 78%, var(--primary-hover) 22%);
-    border-radius: inherit;
-    transition: width 0.45s ease;
-    box-shadow: 0 8px 24px color-mix(in oklab, var(--primary) 28%, transparent);
-  }
-
-  .overview-metrics {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
-  }
-
-  .metric-label {
-    display: block;
-    font-size: 0.85rem;
-    color: color-mix(in oklab, var(--text-secondary) 88%, transparent);
-  }
-
-  .metric-value {
-    display: block;
-    margin-top: 0.2rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .card-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .trip-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: color-mix(in oklab, var(--primary) 12%, transparent);
-    color: var(--primary);
-  }
-
-  .next-trip-card {
-    background: linear-gradient(160deg,
-          color-mix(in oklab, var(--surface) 94%, var(--primary-soft-bg) 6%),
-          color-mix(in oklab, var(--surface) 98%, transparent)
-        );
-    box-shadow: var(--shadow-soft);
-    overflow: hidden;
-    padding: 1.2rem 1.1rem 1.3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .next-trip-hero {
-    position: relative;
-    border-radius: calc(var(--radius-card) - 6px);
-    background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 12%, transparent), color-mix(in oklab, var(--accent) 10%, transparent));
-    min-height: 160px;
-    display: flex;
-    align-items: flex-end;
-    padding: 1rem 1rem 1.1rem;
-    color: white;
-    background-size: cover;
-    background-position: center;
-    overflow: hidden;
-  }
-
-  .next-trip-hero.has-image::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.55));
-    pointer-events: none;
-  }
-
-  .next-trip-hero-overlay {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .next-trip-title {
-    margin: 0.1rem 0 0;
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: inherit;
-  }
-
-  .next-trip-destination {
-    margin: 0;
-    color: color-mix(in oklab, white 78%, transparent);
-    font-size: 0.98rem;
-  }
-
-  .next-trip-date {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    font-weight: 600;
-    color: inherit;
-  }
-
-  .countdown {
-    color: var(--primary);
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-
-  .next-trip-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-  }
-
-  .next-trip-budget {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-    padding: 0.3rem 0.2rem 0.05rem;
-  }
-
-  .budget-label {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    margin-bottom: 0.15rem;
-  }
-
-  .budget-value {
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .budget-chf {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-
-  .next-trip-weather {
-    border-top: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
-    padding-top: 0.75rem;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 0.65rem;
-    align-items: center;
-  }
-
-  .weather-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .weather-text {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-  }
-
-  .next-trip-empty {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: flex-start;
-  }
-
-  .next-trip-empty h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 600;
-  }
-
-  .next-trip-empty p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-  }
-
-  .totals-card {
-    background: linear-gradient(140deg,
-        color-mix(in oklab, var(--surface) 92%, var(--secondary) 8%),
-        color-mix(in oklab, var(--surface) 97%, transparent)
-      );
-    gap: 0.9rem;
-  }
-
-  .totals-value {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .totals-subtitle {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-  }
-
-  :global([data-theme='dark']) .card-surface {
-    border-color: color-mix(in oklab, var(--border) 70%, transparent);
-    box-shadow: var(--shadow-elevated);
-    background: color-mix(in oklab, var(--surface) 92%, var(--surface-soft) 8%);
-  }
-
-  :global([data-theme='dark']) .overview-card {
-    background: linear-gradient(150deg,
-        color-mix(in oklab, var(--surface) 65%, var(--primary-soft-bg) 35%),
-        color-mix(in oklab, var(--surface) 55%, var(--primary) 45%)
-      );
-    box-shadow: var(--shadow-elevated);
-  }
-
-  :global([data-theme='dark']) .overview-percent {
-    color: var(--primary-hover);
-  }
-
-  :global([data-theme='dark']) .overview-subtitle {
-    color: color-mix(in oklab, var(--text-secondary) 80%, transparent);
-  }
-
-  :global([data-theme='dark']) .progress-track {
-    background: color-mix(in oklab, var(--surface) 62%, var(--primary-soft-bg) 38%);
-  }
-
-  :global([data-theme='dark']) .next-trip-card {
-    background: linear-gradient(165deg,
-          color-mix(in oklab, var(--surface) 62%, var(--primary-soft-bg) 38%),
-          color-mix(in oklab, var(--surface) 72%, transparent)
-        );
-  }
-
-  :global([data-theme='dark']) .totals-card {
-    background: linear-gradient(150deg,
-        color-mix(in oklab, var(--surface) 62%, var(--secondary) 38%),
-        color-mix(in oklab, var(--surface) 74%, transparent)
-      );
-  }
-
-  @media (max-width: 1080px) {
-    .primary-row {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .page-shell {
-      width: 100%;
-      padding: 1.4rem 1.2rem 2.2rem;
-    }
-
-    .page-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1.1rem;
-    }
-
-    .actions {
-      justify-content: flex-start;
+      justify-content: center;
     }
   }
 
@@ -1764,14 +1272,5 @@
     .totals-value {
       font-size: 1.7rem;
     }
-
-    .year-spend-total-main {
-      font-size: 1.75rem;
-    }
-
-    .year-spend-body {
-      gap: 1rem;
-    }
   }
-}
 </style>

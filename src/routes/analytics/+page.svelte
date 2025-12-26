@@ -171,9 +171,9 @@
     display: flex;
     flex-direction: column;
     gap: 1.8rem;
-    width: min(85vw, 1240px);
-    margin: 0 auto 2.8rem;
-    padding: 1.8rem 1.8rem 2.4rem;
+    width: 100%;
+    margin-bottom: 2.8rem;
+    padding: 0;
     box-sizing: border-box;
   }
 
