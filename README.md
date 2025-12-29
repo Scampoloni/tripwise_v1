@@ -40,7 +40,7 @@ Reisende verlieren während einer Tour schnell den Überblick über Tagesbudgets
 ## 2. Zielgruppe & Stakeholder
 
 ### Primäre Zielgruppe
-Budgetbewusste Reisende (Studierende, Young Professionals, Backpacker), die 1–3 Reisen pro Jahr planen, Daten gerne mobil erfassen und keine komplexen Tabellen pflegen wollen. Sie benötigen:
+Budgetbewusste Reisende (Studierende, Young Professionals, Backpacker), die 1–3 Reisen pro Jahr planen, Daten gerne erfassen und keine komplexen Tabellen pflegen wollen. Sie benötigen:
 - Einen schnellen Wizard zum Anlegen eines Trips.
 - Eine Trip-Detailseite mit Budgetbalken, Kategorieaufteilung und Expense-Liste.
 - Verständliche Fehlermeldungen, wenn Beträge oder Daten nicht passen.
@@ -74,17 +74,14 @@ Budgetbewusste Reisende (Studierende, Young Professionals, Backpacker), die 1–
 
 **INVEST-Qualität:** Die Stories sind **unabhängig** voneinander umsetzbar (Trip-Wizard, Expense-Erfassung, Analytics und Converter funktionieren separat). Sie bleiben **verhandelbar** in Details wie Anzahl der Wizard-Schritte oder Kategorien, ohne das Kernziel zu verlieren. Jede Story liefert **messbaren Wert** für budgetbewusste Reisende (Transparenz, Kontrolle, Orientierung). Der Aufwand ist **abschätzbar**, da jede Story einem klar abgegrenzten Feature entspricht (z.B. Formular, Modal, Chart-Komponente). Die Stories sind bewusst **klein** gehalten (jeweils ein Hauptworkflow) und in wenigen Tagen umsetzbar. Sie sind **testbar** durch konkrete Erfolgskriterien: Trip existiert in der Liste, Ausgabe erscheint im Detail, Chart zeigt Kategorien, Converter liefert Ergebnis.
 
-### Kernfunktionalität (Stand Dezember 2025)
-- **Dashboard (`src/routes/+page.svelte`)**: Live-Overview, aktiver Trip-Zähler, Budgetbalken, nächster Trip, Jahresausgaben und Shortcut zu Analytics/Globe.
-- **Trip-Liste (`/trips`)**: Filter (aktiv, zukünftig, vergangen), Suche, Delete-Flow (ConfirmDialog), direkter Zugriff auf Cards.
-- **Trip-Wizard (`/trips/new`)**: Drei Schritte (Basisdaten, Budget, Review) inkl. `PlaceSearchInput`, Validierung Budget > 0, Währungswahl, Sticky Preview.
-- **Trip-Detail (`/trips/[id]`)**: Budgetstatus, Fortschritt, Teilnehmer, Expense-Liste, Add-Expense-Modal, Splitting-Logik (Participants + `calculateSplit`), Statusbadges.
-- **Analytics (`/trips/analytics`)**: Chart.js Pie (Kategorien, CHF) + Bar (Ausgaben pro Trip) mit Währungskonvertierung via util `currency.js`.
-- **Converter (`/converter`)**: Live-FX mit Proxy (`/api/rates`), Offline-Fallback (`STATIC_RATES`), Historie und Copy-Button.
-- **Help (`/help`)**: FAQ, Tipps und Links zu Converter / Trip erstellen.
-- **Globe (`/globe`)**: 3D-World-Globe (`three` + `three-globe`), Punkte für Trips mit Koordinaten, Stats zu besuchten Ländern.
-- **TripSplit (`/tripsplit`)**: Beta-Gruppen-Splitting (Gruppe → Teilnehmer → Ausgaben → Salden → Settlement-Berechnung); Debug-Ansicht (`/tripsplit-debug`).
-- **Dark-/Auto-Theme (`src/lib/stores/theme.js`)**: Persistenz, auto-basierte Umschaltung (System/Daytime) und Toggle im Layout.
+### Kernfunktionalität (Mindestumfang)
+Die vier User Stories bilden die Kernworkflows ab:
+1. **Trip anlegen** → Dashboard/Trip-Liste → Wizard (3 Schritte) → Trip-Detail
+2. **Ausgaben erfassen** → Trip-Detail → Modal → Live-Budget-Update
+3. **Kategorien analysieren** → Analytics-Seite mit Pie-/Bar-Charts
+4. **Währungen umrechnen** → Converter mit Live-Kursen und Fallback
+
+> Detaillierte technische Beschreibung siehe [4.4 Prototype](#44-prototype).
 
 ### Akzeptanzkriterien
 1. Nutzende können einen Trip mit Budget, Zeitraum und Ziel ohne Fehler anlegen.
@@ -93,16 +90,11 @@ Budgetbewusste Reisende (Studierende, Young Professionals, Backpacker), die 1–
 4. Currency-Converter liefert ein Ergebnis, auch wenn der Live-Endpoint ausfällt (Fallback).
 5. Daten bleiben nach Reload erhalten (Persistenz in MongoDB) und können erneut geladen werden (`loadTrips`).
 
-### Erweiterungen (bereits implementiert)
-- **Live FX & Converter:** `currency.js` lädt Kurse via Proxy und cached sie; die Converter-Page zeigt Historie, Swap, Copy und Genauigkeitshinweis.
-- **Analytics-Seite:** Chart.js liefert aggregierte Insights für alle Trips (Kategorien + Trip-Gesamtverbrauch).
-- **World Globe:** WebGL-Visualisierung via `WorldGlobe.svelte`, inkl. OrbitControls, Statusfarben und Auto-Rotation.
-- **TripSplit Beta:** Gruppen, Teilnehmer, Ausgaben und Settlement-Berechnung auf Grundlage von `tripSplit.js`.
-- **Theme-Automatik:** Auto-/Light-/Dark-Handling inkl. Persistenz und regelmäßiger Re-Evaluierung.
+### Erweiterungen
+> Über den Mindestumfang hinausgehende Features sind in [Kapitel 5](#5-erweiterungen) dokumentiert.
 
 ### Zukünftige Arbeiten
 - Smart Budget Suggestions und Destination-Guides (derzeit **nicht** umgesetzt → nur Idee).
-- Predictive Insights (z.B. Hochrechnung overspend) außerhalb kleiner Hinweise → aktuell nicht vorhanden.
 - Timeline / Trend-Charts im Trip-Detail (bisher nur globale Analytics-Seite).
 - CSV/PDF Export, Multi-Device-Sync.
 - Echte User-Authentifizierung/Account-Verwaltung (aktuell einfacher Demo-Login).
@@ -110,9 +102,19 @@ Budgetbewusste Reisende (Studierende, Young Professionals, Backpacker), die 1–
 
 ---
 
-## App Flow / User Journey
+## 4. Vorgehen & Artefakte
 
-Das folgende Diagramm visualisiert die zentrale User Journey durch TripWise. Es zeigt die wichtigsten Views (Login, Dashboard, Trip-Erstellung, Trip-Detail mit Ausgaben, Analytics, Converter, Weltkarte und TripSplit) sowie deren Navigation und Abhängigkeiten. Einstieg erfolgt über Login, gefolgt von Dashboard-Entscheidungen (Empty State vs. bestehende Trips), Trip-Management und ergänzenden Features wie Währungsrechner, Globe-Visualisierung oder Gruppen-Splitting.
+### 4.1 Understand & Define
+- **Ausgangslage & Ziele:** Bestehende Travel-Budget-Apps sind entweder Listen ohne Insights oder Komplettlösungen mit zu viel Setup. Ziel: leichte Datenerfassung + klare Visualisierung.
+- **Zielgruppenverständnis:** Desk Research, Interviews und Tests in der Klasse mit budgetbewussten Reisenden (Studierende, Young Professionals).
+- **Wesentliche Erkenntnisse:**
+  1. Desktop-First für Mockup/Planung, da Übersichten mehr Platz benötigen; Umsetzung responsive.
+  2. Kategorien sind wichtiger als reine Summen.
+  3. Fremdwährungen müssen ohne Taschenrechner funktionieren.
+  4. Ein einfacher Login-Screen als Einstieg ist für Prototyp-Tests ausreichend.
+  5. Gruppenfeatures sind nice-to-have, solange sie nicht den Core verlangsamen.
+
+**App Flow / User Journey**
 
 ```mermaid
 flowchart TD
@@ -120,7 +122,7 @@ flowchart TD
     Auth -->|Yes| Login[Login]
     Login --> Dashboard
     Auth -->|No| Register[Register]
-   Register --> Dashboard
+    Register --> Dashboard
     
     Dashboard -->|Empty State| NewTrip[Trip erstellen]
     Dashboard -->|Trip vorhanden| TripList[Trip-Liste]
@@ -134,44 +136,12 @@ flowchart TD
     NewTrip -->|Formular ausfüllen| TripSaved[Trip gespeichert]
     TripSaved --> TripDetail
     
-    TripDetail --> Overview[Übersicht]
-    TripDetail --> TripAnalytics[Trip Analytics]
     TripDetail --> AddExpense[Ausgabe hinzufügen]
-    
-    AddExpense -->|Modal/Formular| ExpenseSaved[Ausgabe gespeichert]
+    AddExpense -->|Modal| ExpenseSaved[Ausgabe gespeichert]
     ExpenseSaved --> TripDetail
     
-    Overview --> EditTrip[Trip bearbeiten]
-    EditTrip --> TripDetail
-    
     TripList --> NewTrip
-    
-    TripSplit --> CreateGroup[Gruppe erstellen]
-    CreateGroup --> AddParticipants[Teilnehmer hinzufügen]
-    AddParticipants --> AddGroupExpenses[Ausgaben erfassen]
-    AddGroupExpenses --> ViewBalances[Salden & Settlement]
-    ViewBalances --> TripSplit
-    
-    Converter --> Dashboard
-    Globe --> Dashboard
-    Analytics --> Dashboard
-    TripAnalytics --> TripDetail
-    TripSplit --> Dashboard
 ```
-
----
-
-## 4. Vorgehen & Artefakte
-
-### 4.1 Understand & Define
-- Ausgangslage: bestehende Travel-Budget-Apps sind entweder Listen ohne Insights oder Komplettlösungen mit zu viel Setup.
-- Zieldefinition: leichte Datenerfassung + klare Visualisierung 
-- Erkenntnisse (Desk Research, Interviews, Tests in der Klasse):
-  1. Desktop-First für Mockup/Planung, da Übersichten mehr Platz benötigen; Umsetzung responsive mit laufenden Mobile-Verbesserungen.
-  2. Kategorien sind wichtiger als reine Summen.
-  3. Fremdwährungen müssen ohne Taschenrechner funktionieren.
-  4. Ein einfacher Login-Screen als Einstieg ist für Prototyp-Tests ausreichend.
-  5. Gruppenfeatures sind nice-to-have, solange sie nicht den Core verlangsamen.
 
 
 ### 4.2 Sketch
@@ -187,92 +157,150 @@ Als zentrale Methode wurde **Crazy 8s** angewendet, um in kurzer Zeit verschiede
 ![Crazy 8s Skizzen](/images/crazy8s.jpg)
 
 ### 4.3 Decide
-Die in der Sketch-Phase erarbeiteten Varianten wurden anhand definierter Kriterien (Mobile Usability, Geschwindigkeit „Trip → Expense“, Erweiterbarkeit) bewertet. Die Crazy-8s-Skizzen bildeten die Grundlage für die Auswahl einer klaren Dashboard-Struktur.
-
-- **Entscheidung:** Die Variante "Hub & Detail" (Variante C) setzte sich durch. Sie kombiniert ein übersichtliches Dashboard mit dedizierten Detailseiten und bietet Flexibilität für verschiedene Bildschirmgrößen.
-- **Umsetzung:** Diese gewählte Struktur wurde anschließend detailliert ausgearbeitet und im funktionalen Prototyp (SvelteKit) umgesetzt.
-- **End-to-End-Flow (implementiert):**
+- **Gewählte Variante & Begründung:** Die in der Sketch-Phase erarbeiteten Varianten wurden anhand definierter Kriterien (Mobile Usability, Geschwindigkeit „Trip → Expense“, Erweiterbarkeit) bewertet. Die Variante "Hub & Detail" (Variante C) setzte sich durch. Sie kombiniert ein übersichtliches Dashboard mit dedizierten Detailseiten und bietet Flexibilität für verschiedene Bildschirmgrössen.
+- **End‑to‑End‑Ablauf:**
   1. Dashboard ohne Trips → CTA „New Trip“.
   2. Wizard sammelt Basisdaten, Budget, Review.
   3. Redirect auf Trip-Detail → Add Expense Modal.
   4. Dashboard & Analytics aktualisieren sich automatisch.
-
+- **Referenz‑Mockup:** [Figma: TripWise Travel Budget Planner](https://www.figma.com/make/FqHsBYPB8soomCpC2osJ5n/TripWise-Travel-Budget-Planner?node-id=0-1&p=f&t=mgzaNv9wKOFiUdCC-0&fullscreen=1)
+  - **Designentscheidungen:** Desktop-First Ansatz (da Budgetverwaltung Platz benötigt), Navigation als Top-Bar, schlichtes modernes Design (Akzentfarbe Blau), konsistente Komponenten und Modalfenster für Interaktionen.
+  - **Seitenstruktur:** Dashboard, Trip-Liste, Neuer Trip (Wizard), Reisedetail, Währungsrechner, Hilfe.
 
 ### 4.4 Prototype
+- **Kernfunktionalität:** Trip-Wizard, Ausgaben-Erfassung, Dashboard mit Live-Budget, Analytics-Charts, Währungsrechner (siehe Details unten).
+- **Deployment:** [tripwisetravel.netlify.app](https://tripwisetravel.netlify.app/)
 
 #### 4.4.1 Entwurf (Design)
-**Prototyp-Link:** [Figma: TripWise Travel Budget Planner](https://www.figma.com/make/FqHsBYPB8soomCpC2osJ5n/TripWise-Travel-Budget-Planner?node-id=0-1&p=f&t=mgzaNv9wKOFiUdCC-0&fullscreen=1)
+> **Hinweis:** Hier wird der **funktionale Prototyp** beschrieben, nicht das Figma-Mockup (→ 4.3).
+
+**Informationsarchitektur**
+Die App folgt dem "Hub & Detail"-Konzept: Ein zentrales Dashboard dient als Einstieg, von dem aus dedizierte Detail-/Funktionsseiten erreichbar sind. Die Navigation erfolgt über eine persistente Top-Bar (Header) mit den Hauptbereichen:
+- **Dashboard** (`/`): Übersicht aller Trips, Budgetstatus, Jahresstatistiken
+- **Trip-Liste** (`/trips`): Filter nach Status, Suche, Zugriff auf einzelne Trips
+- **Neuer Trip** (`/trips/new`): Dreistufiger Wizard (Basisdaten → Budget → Review)
+- **Trip-Detail** (`/trips/[id]`): Budget, Ausgaben, Teilnehmer, Splitting
+- **TripSplit** (`/tripsplit`): Gruppen-Kostenaufteilung (Beta)
+- **Converter** (`/converter`): Währungsrechner mit Live-Kursen
+- **Analytics** (`/analytics`): Aggregierte Auswertungen (Pie-/Bar-Charts)
+- **Globe** (`/globe`): 3D-Weltkarte mit Trip-Visualisierung
+- **Help** (`/help`): FAQ und Tipps
+
+**Oberflächenentwürfe (wichtige Screens)**
+
+| Screen | Beschreibung |
+|--------|--------------|
+| **Dashboard** | Begrüssung mit Jahresübersicht, aktive Trips, Budget-Balken, Shortcut-Cards zu Analytics/Globe. Empty State mit CTA „New Trip" bei fehlenden Daten. |
+| **Trip-Wizard** | Drei Schritte mit Progress-Indicator. Schritt 1: Name, Ziel (PlaceSearchInput mit Autocomplete), Datum. Schritt 2: Budget, Währung. Schritt 3: Zusammenfassung mit Sticky-Preview. |
+| **Trip-Detail** | Budgetstatus (verbraucht/übrig), Kategorieverteilung, Expense-Liste (sortiert nach Datum), Modal für neue Ausgaben, Teilnehmer-Management und Split-Berechnung. |
+| **Converter** | Eingabefeld, Währungsauswahl (Swap-Button), Live-Ergebnis, Genauigkeitshinweis, lokale Historie. |
+| **Analytics** | Pie-Chart (Kategorien in CHF), Bar-Chart (Ausgaben pro Trip), responsive Darstellung. |
 
 **Designentscheidungen**
-1. **Desktop-First Ansatz (Mockup):** Der Figma-Prototyp wurde im Desktop-Format erstellt, da Budgetverwaltung und Detailansichten von viel Platz profitieren. Ein großer Bildschirm ermöglicht eine klare Struktur für längere Workflows. Die technische Umsetzung ist responsive; Kernflows funktionieren ab 320px+, Mobile-Optimierungen (Touch-Targets, Spacing) sind laufende Verbesserungen.
-2. **Navigation als Top-Bar:** Feste Leiste mit Dashboard, Converter, Help und Theme-Toggle. Die aktive Seite wird klar hervorgehoben.
-3. **Visuelles Design:** Schlicht und modern mit viel Weißraum, sanften Schatten und runden Karten. Akzentfarbe Blau für zentrale Elemente.
-4. **Konsistente Komponenten:** Wiederkehrende Strukturen (Cards, Inputs, Buttons) sorgen für ein einheitliches Nutzererlebnis.
-5. **Interaktionsdesign:** Modalfenster (z. B. für Ausgaben) erscheinen als Overlay, damit der Seitenkontext erhalten bleibt. Im Figma-Prototyp wurden Hotspots für die Navigation genutzt.
-
-**Seitenstruktur**
-- **Dashboard:** Übersicht über aktive Reisen, Budgetstatistiken und Trip-Liste.
-- **Neue Reise:** Dreistufiger Wizard (Basisdaten, Budget, Zusammenfassung) mit Live-Vorschau.
-- **Reisedetail:** Anzeige des verbleibenden Budgets, der Kategorien und der erfassten Ausgaben.
-- **Währungsrechner:** Zentrale Karte zur Eingabe und Ausgabe von Umrechnungen.
-- **Hilfe:** Häufige Fragen, Tipps und Feedbackbereich.
-
-**Workflows**
-- **Workflow 1: Neue Reise anlegen**
-  1. Dashboard → „New Trip“.
-  2. Wizard: Titel/Ziel/Datum → Budget/Währung → Zusammenfassung.
-  3. Speichern → Weiterleitung zur Detailansicht.
-- **Workflow 2: Ausgaben erfassen**
-  1. Trip öffnen → „Neue Ausgabe“.
-  2. Modal: Beschreibung, Betrag, Kategorie, Datum → Speichern.
-  3. Detailseite aktualisiert Budget und Liste sofort.
-- **Workflow 3: Währungsrechner nutzen**
-  1. Navigation → Converter.
-  2. Betrag und Währungen wählen → Ergebnis erscheint sofort.
-  3. Optional: Zur Historie hinzufügen.
-- **Workflow 4: Hilfe nutzen**
-  1. Navigation → Help.
-  2. FAQ ausklappen oder Tipps lesen.
+1. **Responsive Mobile-First:** Layout funktioniert ab 320px+; Touch-Targets und Spacing für Mobile optimiert.
+2. **CSS-Variablen:** Konsistentes Design über `variables.css` (Brand-Farben, Spacing, Radius, Shadows) – kein Utility-Framework.
+3. **Light/Dark Theme:** Vollständige Unterstützung mit automatischer Erkennung (System/Daytime) und manuellem Toggle.
+4. **Statusfarben:** Geplant (Blau), Aktiv (Grün), Abgeschlossen (Orange) – konsistent in Cards, Badges und Globe-Punkten.
+5. **Modale Interaktionen:** Ausgaben-Erfassung und Bestätigungsdialoge als Overlays, um Seitenkontext zu erhalten.
+6. **Wiederverwendbare Komponenten:** `TripCard`, `StatCard`, `BackButton`, `Icon`, `ConfirmDialog` für konsistentes UI.
 
 #### 4.4.2 Umsetzung (Technik)
-- **Stack**
-  - Framework: SvelteKit 2 + Vite, Svelte 5 Runes.
-  - Styling: Custom CSS / Variables (`src/lib/styles`), keine Utility-Frameworks.
-  - Datenbank: MongoDB (via `mongodb` Driver).
-  - Charts: `chart.js/auto` auf Analytics-Seite.
-  - Globe: `three`, `three-globe`, OrbitControls.
-  - State: Svelte Stores (`trips`, `theme`, `tripSplit`).
-  - Utils: `currency.js`, `calculations.js`, `split.js`.
-- **Code-Struktur**
+
+**Technologie-Stack**
+| Bereich | Technologie |
+|---------|-------------|
+| Framework | SvelteKit 2.47 + Vite 7 |
+| Reaktivität | Svelte 5 Runes (`$state`, `$derived`, `$effect`) |
+| Datenbank | MongoDB 7 (via `mongodb` Driver) |
+| Charts | Chart.js 4 (`chart.js/auto`) |
+| 3D Globe | Three.js + `three-globe` |
+| Validierung | Zod 4 (Schema-Validierung) |
+| Deployment | Netlify (Adapter `@sveltejs/adapter-netlify`) |
+
+**Tooling**
+- **IDE:** Visual Studio Code mit Svelte-Extension
+- **Build:** Vite mit SvelteKit-Plugin
+- **Testing:** Vitest (Unit-Tests für Utils wie `calculations.js`, `currency.js`)
+- **Version Control:** Git/GitHub
+- **Deployment:** Netlify CLI und GitHub-Integration
+- **KI-Unterstützung:** Siehe Kapitel 7 (KI-Deklaration)
+
+**Struktur & Komponenten**
 ```
 src/
-  routes/
-    +page.svelte                        # Dashboard
-    trips/+page.svelte                  # Trip Liste
-    trips/new/+page.svelte              # Wizard
-    trips/[id]/+page.svelte             # Detail
-    trips/analytics/+page.svelte        
-    converter/+page.svelte
-    globe/+page.svelte
-    help/+page.svelte
-    tripsplit/+page.svelte
-  lib/
-    components/*.svelte
-    stores/*.js
-    utils/*.js
-    types/*.ts
+├── routes/                          # SvelteKit File-based Routing
+│   ├── +page.svelte                 # Dashboard
+│   ├── +layout.svelte               # App-Shell (Header, Theme-Init, Trip-Load)
+│   ├── trips/
+│   │   ├── +page.svelte             # Trip-Liste mit Filter
+│   │   ├── new/+page.svelte         # Wizard (3 Schritte)
+│   │   └── [id]/+page.svelte        # Trip-Detail (1875 Zeilen)
+│   ├── converter/+page.svelte       # Währungsrechner
+│   ├── analytics/+page.svelte       # Charts
+│   ├── globe/+page.svelte           # 3D-Karte
+│   ├── tripsplit/+page.svelte       # Gruppen-Splitting
+│   ├── help/+page.svelte            # FAQ
+│   └── api/                         # Backend-Endpunkte
+│       ├── trips/                   # CRUD für Trips
+│       ├── expenses/                # CRUD für Ausgaben
+│       ├── rates/                   # FX-Proxy
+│       └── auth/                    # Login/Logout
+├── lib/
+│   ├── components/                  # Wiederverwendbare UI
+│   │   ├── Header.svelte            # Navigation + Theme-Toggle
+│   │   ├── TripCard.svelte          # Trip-Vorschau
+│   │   ├── StatCard.svelte          # Statistik-Kachel
+│   │   ├── WorldGlobe.svelte        # Three.js Globe
+│   │   ├── PlaceSearchInput.svelte  # Ortssuche mit Autocomplete
+│   │   ├── ConfirmDialog.svelte     # Bestätigungsmodal
+│   │   └── Icon.svelte              # SVG-Icons
+│   ├── stores/                      # Svelte Stores (State)
+│   │   ├── trips.js                 # Trip-CRUD, API-Kommunikation
+│   │   ├── theme.js                 # Light/Dark/Auto
+│   │   └── tripSplit.js             # Gruppen-Splitting
+│   ├── utils/                       # Hilfsfunktionen
+│   │   ├── currency.js              # FX-Konvertierung, Caching
+│   │   ├── calculations.js          # Budget-/Ausgaben-Berechnungen
+│   │   ├── split.js                 # Settlement-Algorithmus
+│   │   └── worldStats.js            # Länder-Statistiken
+│   ├── types/                       # TypeScript-Definitionen
+│   │   ├── trips.ts                 # Trip, Expense, Participant
+│   │   └── tripSplit.ts             # Group, Settlement
+│   ├── server/                      # Server-only Code
+│   │   └── db.js                    # MongoDB-Verbindung, CRUD
+│   └── styles/                      # Globale Styles
+│       ├── variables.css            # CSS Custom Properties
+│       └── globals.css              # Reset, Base-Styles
 ```
-- **Backend & Persistenz**
-  - Frontend-Stores greifen auf SvelteKit-APIs (`/api/trips`, `/api/trips/:id/expenses`, `/api/rates`).
-  - Die API-Endpunkte kommunizieren mit einer MongoDB-Datenbank (`src/lib/server/db.js`).
-  - Beim Laden: `loadTrips()` → API (MongoDB) → Mapping → Store.
-  - Expenses können neu geladen, erstellt, gelöscht werden (Update via Store & DB).
-- **Deployment**
-  - Netlify Setup (`netlify.toml`, Build `npm run build`, Publish `build/`).
-  - Secrets-Scan-Bypass für `DB_NAME`/`DB_URI`.
-  - Deployment-URL: [tripwisev3.netlify.app](https://tripwisev3.netlify.app/login).
+
+**Daten & Schnittstellen**
+- **Datenmodell:** `Trip` → `Expense[]` → `Participant[]`; Felder wie `budget`, `currency`, `status`, `destinationLat/Lon` für Geo-Features.
+- **API-Endpunkte:**
+  - `GET/POST /api/trips` – Liste/Erstellen
+  - `GET/PUT/DELETE /api/trips/[id]` – Einzelner Trip
+  - `POST/DELETE /api/trips/[id]/expenses` – Ausgaben-Management
+  - `GET /api/rates?base=CHF` – Live-Wechselkurse (Proxy)
+  - `POST /api/auth/login|logout` – Session-Handling
+- **Persistenz-Flow:** `loadTrips()` im Layout → API-Call → MongoDB → Mapping (`mapApiTripToStoreTrip`) → Svelte Store → reaktive UI.
+
+**Besondere Entscheidungen**
+| Entscheidung | Begründung |
+|--------------|------------|
+| **Svelte Stores statt Context** | Globaler Zugriff auf Trips/Theme ohne Prop-Drilling; einfache Persistenz-Logik. |
+| **FX-Fallback (STATIC_RATES)** | Offline-Fähigkeit: Bei API-Ausfall werden statische Kurse verwendet. |
+| **Client-Side Caching (12h TTL)** | Reduziert API-Calls für Wechselkurse; Balance zwischen Aktualität und Performance. |
+| **Kein Auth-Framework** | Einfacher Demo-Login für Prototyp; echte Authentifizierung ist „Zukünftige Arbeit". |
+| **Three.js für Globe** | Visuelles Highlight; Auto-Rotation und Status-Farbcodierung für bessere UX. |
+| **Zod für Validierung** | Schema-basierte Validierung sowohl im Frontend als auch Server-seitig. |
+| **Responsive ohne Framework** | CSS-Variablen und Media-Queries statt Tailwind/Bootstrap – volle Kontrolle, kleinere Bundle-Size. |
+
+**Deployment-Details**
+- **Setup:** `netlify.toml` mit Build-Command `npm run build`, Publish-Verzeichnis `build/`
+- **Umgebungsvariablen:** `DB_URI`, `DB_NAME` (MongoDB Atlas)
 
 ### 4.5 Validate
+
+**URL der getesteten Version:** Lokale Entwicklungsumgebung (Localhost) – identisch mit [tripwisetravel.netlify.app](https://tripwisetravel.netlify.app/)
 
 #### Usability-Evaluation: TripWise
 
@@ -295,7 +323,7 @@ Das Ziel dieser Evaluation ist es, zu überprüfen, ob neue Nutzer:innen die zen
   * Digital-affin
   * Gelegentliche Reisen (Städtetrips, Urlaub)
   * Grundlegendes Budgetbewusstsein
-* **Begründung der Auswahl:** Die Testpersonen entsprechen der primären Zielgruppe von TripWise. Sie nutzen regelmäßig Web- und Mobile-Applikationen, verfügen jedoch über keinen UX- oder Entwickler-Hintergrund, wodurch ein authentisches Nutzerverhalten beobachtet werden konnte.
+* **Begründung der Auswahl:** Die Testpersonen entsprechen der primären Zielgruppe von TripWise. Sie nutzen regelmässig Web- und Mobile-Applikationen, verfügen jedoch über keinen UX- oder Entwickler-Hintergrund, wodurch ein authentisches Nutzerverhalten beobachtet werden konnte.
 
 ##### 4. Test-Setup
 
@@ -349,7 +377,7 @@ Das Ziel dieser Evaluation ist es, zu überprüfen, ob neue Nutzer:innen die zen
 * **Zu P3:** Kontrast der Autocomplete-Vorschläge im Darkmode erhöhen und einheitliche Input-Styles verwenden.
 * **Zu P4:** Währungs-Label innerhalb des Inputfelds neu positionieren oder das Padding erhöhen.
 * **Zu P5:** Währungs-Dropdown direkt in das Budget-Eingabefeld integrieren.
-* **Zu P6:** „Ausgaben erfassen“ ausschließlich in der Ausgaben-Card platzieren, um visuelle Redundanz zu vermeiden.
+* **Zu P6:** „Ausgaben erfassen“ ausschliesslich in der Ausgaben-Card platzieren, um visuelle Redundanz zu vermeiden.
 
 ##### 9. Reflexion & Fazit
 
@@ -394,21 +422,35 @@ Die folgenden Issues wurden aus dem Usability-Test abgeleitet und nach Prioritä
 ---
 
 ## 7. KI-Deklaration
-- **Eingesetzte Tools:**
-  - GitHub Copilot (VS Code) für Boilerplate, Formular-/Store-Patterns, CSS-Ideen.
-  - ChatGPT (GPT 5.1/5.2) & Gemini 3 Pro für Textbausteine im README, Fehlermeldungs-Formulierungen und Debug-Hinweise (z.B. Chart.js Setup, three.js Cleanup) und Code Vorschläge.
-- **Einsatzbereiche:**
-  - Vorschläge für Komponentenstruktur (TripCard, Modal), Validierungsfunktionen, Copy-Varianten.
-  - Code Verbesserungen und Optimierungen.
-  - Dokumentationsentwürfe (Abschnitte strukturieren, Stichpunkte sammeln).
-  - Fehlersuche bei Fetch/Store-Logik und R3F/three-Konfigurationen.
-- **Qualitätssicherung & Eigenanteil:**
-  - Architekturen (Hub-&-Detail, Store-Aufteilung, API-Mapping) wurden eigenständig definiert, KI lieferte nur Inspirations-Snippets.
-  - Jeder KI-Vorschlag wurde getestet, angepasst und kommentiert; keine ungeprüften Copy-Paste-Stellen.
-  - Validierungen, Exchange-Rate-Fallback, TripSplit-Mathe und Globe-Steuerung wurden manuell aufgebaut.
-- **Reflexion:**
-  - KI beschleunigt Routineaufgaben, ersetzt aber keine UX-Tests oder Architekturentscheidungen.
-  - Risiken (veraltete API-Aufrufe, Halluzinationen) werden durch Reviews und Logging abgefedert.
+
+### Eingesetzte KI-Werkzeuge
+- **GitHub Copilot** (VS Code Extension) – Code-Completion, Boilerplate
+- **ChatGPT** (GPT Codex/5.1/5.2) – Debugging, Dokumentation, Konzeptideen
+- **Claude & Gemini** (Sonnet/Opus 4.5 & Gemini 3 Pro) – Code-Reviews, Refactoring-Vorschläge
+
+### Zweck & Umfang
+- **Codevorschläge:** Komponentenstruktur (TripCard, Modal), Validierungsfunktionen, Store-Patterns, CSS-Ideen
+- **Dokumentation:** Textbausteine für README, Strukturierung von Abschnitten
+- **Debugging:** Fehlersuche bei Fetch/Store-Logik, Chart.js-Setup, Three.js-Konfiguration
+- **Umfang:** Punktuell für Routineaufgaben; keine vollständigen Features ohne Überprüfung übernommen
+
+### Art der Beiträge
+- Formular-Validierungen (Grundgerüst)
+- CSS-Varianten und Responsive-Breakpoints
+- Dokumentationsentwürfe (Stichpunkte, Formulierungen)
+- Debug-Hinweise für komplexe Bibliotheken (three.js, Chart.js)
+
+### Eigene Leistung (Abgrenzung)
+- **Architektur:** Hub-&-Detail-Konzept, Store-Aufteilung, API-Mapping eigenständig entworfen
+- **Kernlogik:** Validierungen, Exchange-Rate-Fallback, TripSplit-Settlement-Algorithmus, Globe-Steuerung manuell implementiert
+- **UX-Entscheidungen:** Wizard-Flow, Statusfarben, Theme-Handling ohne KI-Einfluss
+- **Testing & QA:** Jeder KI-Vorschlag wurde getestet und gegebenfalls angepasst/optimiert.
+
+### Reflexion
+- **Nutzen:** KI beschleunigt Routineaufgaben (Boilerplate, Syntax) erheblich, besonders für Einsteiger
+- **Grenzen:** Ersetzt keine UX-Tests, Architekturentscheidungen oder domänenspezifisches Wissen
+- **Risiken:** Veraltete API-Aufrufe, Halluzinationen – abgefedert durch Reviews und manuelles Testing
+- **Fazit:** KI ist ein mächtiges Werkzeug, kann aber ohne kritische Prüfung auch Mehraufwand verursachen
 
 ---
 
@@ -416,7 +458,7 @@ Die folgenden Issues wurden aus dem Usability-Test abgeleitet und nach Prioritä
 - **Figma-Mockup:** [TripWise Travel Budget Planner](https://www.figma.com/make/FqHsBYPB8soomCpC2osJ5n/TripWise-Travel-Budget-Planner?node-id=0-1&p=f&t=mgzaNv9wKOFiUdCC-0&full)
 - **Testskript & Beobachtungen:** Siehe Abschnitt 4.5 (Usability-Evaluation); weitere Artefakte siehe.
 - **Screenshots & Skizzen:** Crazy-8-Skizzen unter `/images/crazy8s.jpg`.
-- **Deployment-Link:** [TripWise Travel Budget Planner](https://tripwisev3.netlify.app/login).
+- **Deployment-Link:** [TripWise Travel Budget Planner](https://tripwisetravel.netlify.app/).
 
 
 
